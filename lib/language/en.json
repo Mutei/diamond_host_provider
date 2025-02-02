@@ -406,8 +406,8 @@
   "Unable to retrieve user information. Please try again.":"Unable to retrieve user information. Please try again.",
   "You have entered an incorrect OTP code. Please try again.":"You have entered an incorrect OTP code. Please try again.",
   "An unexpected error occurred. Please try again.":"An unexpected error occurred. Please try again.",
-  "I accept the ": "I accept the ",
-  "terms and conditions": "terms and conditions",
+  "I accept the ": "I agree to the ",
+  "terms and conditions": "Terms and Privacy",
   "Confirm Delete":"Confirm Delete",
   "Delete Account":"Delete Account",
   "Are you sure you want to delete your account? This action cannot be undone.":"Are you sure you want to delete your account? By deleteing your account, all your posts, estates and booking requests you receive will be deleted.",
@@ -458,5 +458,10 @@
   "Enter comment": "Enter comment",
   "Rate & Comment": "Rate & Comment",
   "Remove": "Remove",
-  "Active until: ": "Active until: "
+  "Active until: ": "Active until: ",
+  "Retype Password": "Retype Password",
+  "Passwords do not match": "Passwords do not match",
+  "Let’s Create": "Let’s Create",
+  "Your Account": "Your Account",
+  "User's Profile": "User's Profile"
 }

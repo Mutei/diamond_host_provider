@@ -289,8 +289,8 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                               if (result != null &&
                                   result.files.single.path != null) {
                                 String pdfPath = result.files.single.path!;
-                                String? pdfUrl =
-                                    await backendService.uploadPdfToStorage(
+                                String? pdfUrl = await backendService
+                                    .uploadFacilityPdfToStorage(
                                         pdfPath, idEstate.toString());
 
                                 if (pdfUrl != null) {
@@ -400,7 +400,7 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                                   result.files.single.path != null) {
                                 String pdfPath = result.files.single.path!;
                                 String? pdfUrl =
-                                    await backendService.uploadPdfToStorage(
+                                    await backendService.uploadTaxPdfToStorage(
                                         pdfPath, idEstate.toString());
 
                                 if (pdfUrl != null) {

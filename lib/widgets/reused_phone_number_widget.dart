@@ -17,44 +17,48 @@ class ReusedPhoneNumberField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return IntlPhoneField(
-      decoration: InputDecoration(
-        labelText: getTranslated(context, 'Phone Number'),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(30),
+    return SizedBox(
+      width: 300,
+      child: IntlPhoneField(
+        decoration: InputDecoration(
+          labelText: getTranslated(context, 'Phone Number'),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+          ),
+          // Set the default enabled border
+          enabledBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: kDeepPurpleColor), // Border color when enabled
+            borderRadius: BorderRadius.circular(30),
+          ),
+          // Set the border color when focused
+          focusedBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: kDeepPurpleColor, width: 2), // Border color when focused
+            borderRadius: BorderRadius.circular(30),
+          ),
+          // Set the border color when there's an error
+          errorBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: kPurpleColor,
+                width: 2), // Border color when there's an error
+            borderRadius: BorderRadius.circular(30),
+          ),
+          // Set the border for focused error
+          focusedErrorBorder: OutlineInputBorder(
+            borderSide: BorderSide(
+                color: kPurpleColor,
+                width: 2), // Border color when focused and there's an error
+            borderRadius: BorderRadius.circular(30),
+          ),
         ),
-        // Set the default enabled border
-        enabledBorder: OutlineInputBorder(
-          borderSide:
-              BorderSide(color: kDeepPurpleColor), // Border color when enabled
-          borderRadius: BorderRadius.circular(30),
-        ),
-        // Set the border color when focused
-        focusedBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-              color: kDeepPurpleColor, width: 2), // Border color when focused
-          borderRadius: BorderRadius.circular(30),
-        ),
-        // Set the border color when there's an error
-        errorBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-              color: kPurpleColor,
-              width: 2), // Border color when there's an error
-          borderRadius: BorderRadius.circular(30),
-        ),
-        // Set the border for focused error
-        focusedErrorBorder: OutlineInputBorder(
-          borderSide: BorderSide(
-              color: kPurpleColor,
-              width: 2), // Border color when focused and there's an error
-          borderRadius: BorderRadius.circular(30),
-        ),
+        initialCountryCode: 'SA', // Default country code
+        onChanged: (phone) {
+          onPhoneNumberChanged(
+              phone.completeNumber); // Handle phone number input
+        },
+        validator: validator, // Add the correct validator type
       ),
-      initialCountryCode: 'SA', // Default country code
-      onChanged: (phone) {
-        onPhoneNumberChanged(phone.completeNumber); // Handle phone number input
-      },
-      validator: validator, // Add the correct validator type
     );
   }
 }

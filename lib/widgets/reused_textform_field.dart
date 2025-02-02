@@ -131,44 +131,36 @@ class _ReusedTextFormFieldState extends State<ReusedTextFormField> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: 300, // set your desired width
+
       decoration: BoxDecoration(
         border: Border.all(
-          color: kDeepPurpleColor, // Adjust based on need
+          color: kDeepPurpleColor,
         ),
         borderRadius: BorderRadius.circular(30),
       ),
       child: TextFormField(
-        obscureText: widget.obscureText
-            ? _isObscure
-            : false, // Controls the obscure text behavior
+        obscureText: widget.obscureText ? _isObscure : false,
         controller: widget.controller,
-        validator: widget.validator, // Add the validator here
-        keyboardType: widget.keyboardType ??
-            TextInputType
-                .text, // Use keyboardType if provided, else default to TextInputType.text
+        validator: widget.validator,
+        keyboardType: widget.keyboardType ?? TextInputType.text,
         style: TextStyle(
-          color: Theme.of(context)
-              .textTheme
-              .bodyLarge
-              ?.color, // Replace bodyText1 with bodyLarge
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         ),
         decoration: InputDecoration(
           border: InputBorder.none,
           hintText: widget.hintText,
           prefixIcon: Icon(
-            widget.prefixIcon, // Use icons from icons_plus
-            color: kDeepPurpleColor, // Adjust based on need
+            widget.prefixIcon,
+            color: kDeepPurpleColor,
           ),
           suffixIcon: widget.obscureText
               ? Row(
-                  mainAxisSize:
-                      MainAxisSize.min, // Ensures the row takes minimal space
+                  mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
                       icon: Icon(
-                        _isObscure
-                            ? Bootstrap.eye_slash
-                            : Bootstrap.eye, // icons_plus eye icon
+                        _isObscure ? Bootstrap.eye_slash : Bootstrap.eye,
                         color: Colors.grey,
                       ),
                       onPressed: () {
@@ -176,9 +168,7 @@ class _ReusedTextFormFieldState extends State<ReusedTextFormField> {
                           _isObscure = !_isObscure;
                         });
                       },
-                      tooltip: _isObscure
-                          ? 'Show Password'
-                          : 'Hide Password', // You can replace with getTranslated if needed
+                      tooltip: _isObscure ? 'Show Password' : 'Hide Password',
                     ),
                     if (widget.onGeneratePassword != null)
                       IconButton(
@@ -187,14 +177,12 @@ class _ReusedTextFormFieldState extends State<ReusedTextFormField> {
                           color: kPurpleColor,
                         ),
                         onPressed: widget.onGeneratePassword,
-                        tooltip:
-                            'Generate Password', // You can replace with getTranslated if needed
+                        tooltip: 'Generate Password',
                       ),
                   ],
                 )
-              : null, // Only show the toggle icon for password fields
-          hintStyle:
-              const TextStyle(color: Colors.grey), // Adjust based on need
+              : null,
+          hintStyle: const TextStyle(color: Colors.grey),
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
         ),

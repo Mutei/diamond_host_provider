@@ -14,7 +14,7 @@ class CustomButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: double.infinity,
+      width: 300,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(30),
         gradient: kPrimaryGradient, // Use the gradient from colors.dart

@@ -61,7 +61,7 @@ class CustomDrawer extends StatelessWidget {
             ),
 
             DrawerItem(
-              text: getTranslated(context, "Profile"),
+              text: getTranslated(context, "User's Profile"),
               icon: Icon(Icons.person, color: kDeepPurpleColor),
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(

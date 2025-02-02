@@ -23,11 +23,34 @@ class AddEstateServices {
   }
 
   // Modified Method: Now accepts String path instead of XFile
-  Future<String?> uploadPdfToStorage(String pdfPath, String idEstate) async {
+  Future<String?> uploadFacilityPdfToStorage(
+      String pdfPath, String idEstate) async {
     try {
       // Create a reference to the location you want to upload to in Firebase Storage
       Reference storageRef =
           storage.ref().child("estates/$idEstate/facility_document.pdf");
+
+      // Upload the file
+      UploadTask uploadTask = storageRef.putFile(File(pdfPath));
+
+      // Wait for the upload to complete
+      TaskSnapshot snapshot = await uploadTask;
+
+      // Get the download URL
+      String downloadUrl = await snapshot.ref.getDownloadURL();
+
+      return downloadUrl;
+    } catch (e) {
+      print("Error uploading PDF: $e");
+      return null;
+    }
+  }
+
+  Future<String?> uploadTaxPdfToStorage(String pdfPath, String idEstate) async {
+    try {
+      // Create a reference to the location you want to upload to in Firebase Storage
+      Reference storageRef =
+          storage.ref().child("estates/$idEstate/tax_document.pdf");
 
       // Upload the file
       UploadTask uploadTask = storageRef.putFile(File(pdfPath));
