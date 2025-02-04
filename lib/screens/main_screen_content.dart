@@ -38,6 +38,7 @@ class _MainScreenContentState extends State<MainScreenContent>
   bool searchActive = false;
 
   final TextEditingController searchController = TextEditingController();
+  String firstName = '';
 
   @override
   void initState() {
@@ -45,6 +46,7 @@ class _MainScreenContentState extends State<MainScreenContent>
     WidgetsBinding.instance.addObserver(this);
     searchController.addListener(_filterEstates); // Add listener for search
     _checkPermissionsAndFetchData();
+    _fetchUserFirstName(); // Fetch user's first name on initialization
   }
 
   @override
@@ -71,6 +73,7 @@ class _MainScreenContentState extends State<MainScreenContent>
       await prefs.setBool('permissionsChecked', true);
     }
 
+    // Fetch estates immediately and permissions first
     await _fetchEstates();
     await _checkIncompleteEstates(); // Check for incomplete estates
   }
@@ -128,6 +131,20 @@ class _MainScreenContentState extends State<MainScreenContent>
     );
   }
 
+  Future<void> _fetchUserFirstName() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final userRef = FirebaseDatabase.instance.ref("App/User/$userId");
+      final snapshot = await userRef.get();
+      if (snapshot.exists) {
+        setState(() {
+          // Cast the value to String and handle null values gracefully
+          firstName = snapshot.child('FirstName').value?.toString() ?? '';
+        });
+      }
+    }
+  }
+
   Future<void> _fetchEstates() async {
     setState(() => isLoading = true);
 
@@ -143,7 +160,10 @@ class _MainScreenContentState extends State<MainScreenContent>
           .where((estate) => estate['IDUser'] == userId)
           .toList();
 
-      await _fetchRatings(parsedEstates);
+      // Fetch ratings concurrently
+      await Future.wait(parsedEstates.map((estate) async {
+        await _fetchRatings(estate);
+      }));
 
       setState(() {
         estates = parsedEstates;
@@ -156,19 +176,16 @@ class _MainScreenContentState extends State<MainScreenContent>
     }
   }
 
-  Future<void> _fetchRatings(List<Map<String, dynamic>> estates) async {
-    for (var estate in estates) {
-      final ratings =
-          await customerRateServices.fetchEstateRatingWithUsers(estate['id']);
-      final totalRating = ratings.isNotEmpty
-          ? ratings.map((e) => e['rating'] as double).reduce((a, b) => a + b) /
-              ratings.length
-          : 0.0;
-      setState(() {
-        estate['rating'] = totalRating;
-        estate['ratingsList'] = ratings;
-      });
-    }
+  Future<void> _fetchRatings(Map<String, dynamic> estate) async {
+    final ratings =
+        await customerRateServices.fetchEstateRatingWithUsers(estate['id']);
+    final totalRating = ratings.isNotEmpty
+        ? ratings.map((e) => e['rating'] as double).reduce((a, b) => a + b) /
+            ratings.length
+        : 0.0;
+
+    estate['rating'] = totalRating;
+    estate['ratingsList'] = ratings;
   }
 
   List<Map<String, dynamic>> _parseEstates(Map<String, dynamic> data) {
@@ -239,6 +256,17 @@ class _MainScreenContentState extends State<MainScreenContent>
       searchActive = false;
       filteredEstates = estates;
     });
+  }
+
+  String _getGreeting() {
+    final currentHour = DateTime.now().hour;
+    if (currentHour < 12) {
+      return getTranslated(context, "Good Morning");
+    } else if (currentHour < 18) {
+      return getTranslated(context, "Good Afternoon");
+    } else {
+      return getTranslated(context, "Good Evening");
+    }
   }
 
   Future<void> _checkIncompleteEstates() async {
@@ -347,6 +375,23 @@ class _MainScreenContentState extends State<MainScreenContent>
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Display greeting with the user's first name
+                        Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Row(
+                            children: [
+                              Text(
+                                "${_getGreeting()}, ",
+                                style: kPrimaryStyle.copyWith(fontSize: 22),
+                              ),
+                              Text(firstName,
+                                  style: TextStyle(
+                                      fontSize: 22,
+                                      color: Colors.orange,
+                                      fontWeight: FontWeight.bold)),
+                            ],
+                          ),
+                        ),
                         // Search Text Field
                         Padding(
                           padding: const EdgeInsets.all(16.0),

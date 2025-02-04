@@ -15,7 +15,7 @@ const kPurpleColor = Color(0xFF900707);
 const kErrorColor = Colors.red;
 const kUnderProcessColor = Colors.orange;
 const kConfirmColor = Colors.green;
-const kDarkModeColor = Colors.black;
+const kDarkModeColor = Color(0xFF193945);
 // Define the gradient as a reusable constant
 const LinearGradient kPrimaryGradient = LinearGradient(
   colors: [Color(0xFF900707), Color(0xFF900707)],

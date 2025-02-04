@@ -464,6 +464,13 @@
   "Passwords do not match": "كلمات المرور غير متطابقة",
   "Your Account": "نُنشئ حسابك",
   "Let’s Create":"خــــــــــــلينا",
-  "User's Profile": "ملف المستخدم"
+  "User's Profile": "ملف المستخدم",
+  "Good Morning": "صباح الخير",
+  "Good Afternoon": "مساء الخير",
+  "Good Evening": "مساء الخير",
+  "Sessions": "الجلسات",
+  "Hotel Entry": "دخول الفندق",
+  "Entry": "دخول"
+
 
 }

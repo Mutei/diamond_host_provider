@@ -3,7 +3,6 @@ import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
 import 'package:daimond_host_provider/extension/sized_box_extension.dart';
 import 'package:daimond_host_provider/screens/qr_image_screen.dart';
-import 'package:daimond_host_provider/widgets/reused_elevated_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -24,6 +23,7 @@ import '../utils/rooms.dart';
 import '../utils/success_dialogue.dart';
 import '../utils/failure_dialogue.dart';
 import '../widgets/chip_widget.dart';
+import '../widgets/reused_elevated_button.dart';
 import 'edit_estate_screen.dart';
 import 'estate_chat_screen.dart';
 
@@ -229,7 +229,6 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
             .child('${widget.estateId}/$index.jpg');
         final imageUrl = await storageRef.getDownloadURL();
         imageUrls.add(imageUrl);
-
         await _cacheManager.getSingleFile(imageUrl);
       } catch (e) {
         hasMoreImages = false;
@@ -291,15 +290,11 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
     }
   }
 
+  // These helper functions translate the options based on the locale.
   String getTranslatedTypeOfRestaurant(BuildContext context, String types) {
-    // Check the current locale
     bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
-    // Split the types by comma and trim whitespace
     List<String> typeList =
         types.split(',').map((type) => type.trim()).toList();
-
-    // Translate each type in the list
     List translatedTypes = typeList.map((type) {
       final match = restaurantOptions.firstWhere(
         (option) => option['label'] == type,
@@ -307,8 +302,6 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
       );
       return isArabic ? match['labelAr'] : match['label'];
     }).toList();
-
-    // Join the translated types back with a comma
     return translatedTypes.join(', ');
   }
 
@@ -368,6 +361,143 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
     return translatedTypes.join(', ');
   }
 
+  // When a chip is tapped, show a full list of options (e.g., full list of restaurants)
+  // void _showOptionsList(String title, List<Map<String, dynamic>> options) {
+  //   final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  //   showModalBottomSheet(
+  //     context: context,
+  //     shape: const RoundedRectangleBorder(
+  //         borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+  //     builder: (context) {
+  //       return Container(
+  //         height: MediaQuery.of(context).size.height * 0.5,
+  //         padding: const EdgeInsets.all(16),
+  //         child: Column(
+  //           crossAxisAlignment: CrossAxisAlignment.start,
+  //           children: [
+  //             Center(
+  //               child: Container(
+  //                 width: 40,
+  //                 height: 4,
+  //                 margin: const EdgeInsets.only(bottom: 16),
+  //                 decoration: BoxDecoration(
+  //                   color: Colors.grey[300],
+  //                   borderRadius: BorderRadius.circular(2),
+  //                 ),
+  //               ),
+  //             ),
+  //             Text(title,
+  //                 style: const TextStyle(
+  //                     fontSize: 20, fontWeight: FontWeight.bold)),
+  //             const SizedBox(height: 16),
+  //             Expanded(
+  //               child: ListView.builder(
+  //                 itemCount: options.length,
+  //                 itemBuilder: (context, index) {
+  //                   final option = options[index];
+  //                   return ListTile(
+  //                     title: Text(
+  //                         isArabic ? option['labelAr']! : option['label']!),
+  //                   );
+  //                 },
+  //               ),
+  //             )
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
+  void _showOptionsList(String title, List<Map<String, dynamic>> options) {
+    final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    // Get the options based on the estate data from the Firebase database
+    List<Map<String, dynamic>> estateOptions = [];
+
+    // Check if estate data contains the keys and map them accordingly
+    if (title == getTranslated(context, "Type of Restaurant")) {
+      estateOptions = restaurantOptions
+          .where((option) {
+            return estate['TypeofRestaurant']?.contains(option['label']) ??
+                false;
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    } else if (title == getTranslated(context, "Sessions")) {
+      estateOptions = sessionsOptions
+          .where((option) {
+            return estate['Sessions']?.contains(option['label']) ?? false;
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    } else if (title == getTranslated(context, "Entry")) {
+      estateOptions = entryOptions
+          .where((option) {
+            return estate['Entry']?.contains(option['label']) ?? false;
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    } else if (title == getTranslated(context, "Hotel Entry")) {
+      estateOptions = hotelEntryOptions
+          .where((option) {
+            return estate['Entry']?.contains(option['label']) ?? false;
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    } else if (title == getTranslated(context, "Music")) {
+      estateOptions = coffeeMusicOptions
+          .where((option) {
+            return estate['Lstmusic']?.contains(option['label']) ?? false;
+          })
+          .cast<Map<String, dynamic>>()
+          .toList();
+    }
+
+    // Show the filtered options in the modal sheet
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.5,
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Text(title,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: estateOptions.length,
+                  itemBuilder: (context, index) {
+                    final option = estateOptions[index];
+                    return ListTile(
+                      title: Text(
+                          isArabic ? option['labelAr']! : option['label']!),
+                    );
+                  },
+                ),
+              )
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final String languageCode = Localizations.localeOf(context).languageCode;
@@ -382,35 +512,28 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
       appBar: AppBar(
         iconTheme: kIconTheme,
         elevation: 0,
+        backgroundColor: Colors.white,
         actions: [
-          InkWell(
-            child: Icon(Icons.map_outlined),
-            onTap: () {
-              _launchMaps();
-            },
+          IconButton(
+            icon: const Icon(Icons.map_outlined, color: kDeepPurpleColor),
+            onPressed: _launchMaps,
           ),
-          10.kW,
           if (widget.estateType != "1")
-            InkWell(
-              child: const Icon(Icons.edit),
-              onTap: () async {
+            IconButton(
+              icon: const Icon(Icons.edit, color: kDeepPurpleColor),
+              onPressed: () async {
                 await Navigator.of(context).push(MaterialPageRoute(
                   builder: (context) => EditEstate(
                     objEstate: estate,
                     LstRooms: LstRooms,
                   ),
                 ));
-                // Refresh estate data after returning from EditEstate
                 _fetchEstateData();
               },
             ),
-          10.kW,
           IconButton(
-            icon: Icon(
-              Icons.chat,
-              color: kDeepPurpleColor,
-            ),
-            onPressed: () async {
+            icon: const Icon(Icons.chat, color: kDeepPurpleColor),
+            onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (context) => EstateChatScreen(
@@ -432,6 +555,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Image carousel with gradient overlay
                     _imageUrls.isEmpty
                         ? Container(
                             height: 200,
@@ -443,7 +567,6 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                 child: CircularProgressIndicator()),
                           )
                         : Stack(
-                            alignment: Alignment.bottomCenter,
                             children: [
                               SizedBox(
                                 height: 200,
@@ -455,29 +578,52 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                     });
                                   },
                                   itemBuilder: (context, index) {
-                                    return ClipRRect(
-                                      borderRadius: BorderRadius.circular(15),
-                                      child: CachedNetworkImage(
-                                        imageUrl: _imageUrls[index],
-                                        cacheManager: _cacheManager,
-                                        placeholder: (context, url) =>
-                                            Container(color: Colors.grey[300]),
-                                        errorWidget: (context, url, error) =>
-                                            const Icon(Icons.error),
-                                        fit: BoxFit.cover,
-                                        width: double.infinity,
-                                      ),
+                                    return Stack(
+                                      children: [
+                                        ClipRRect(
+                                          borderRadius:
+                                              BorderRadius.circular(15),
+                                          child: CachedNetworkImage(
+                                            imageUrl: _imageUrls[index],
+                                            cacheManager: _cacheManager,
+                                            placeholder: (context, url) =>
+                                                Container(
+                                                    color: Colors.grey[300]),
+                                            errorWidget:
+                                                (context, url, error) =>
+                                                    const Icon(Icons.error),
+                                            fit: BoxFit.cover,
+                                            width: double.infinity,
+                                          ),
+                                        ),
+                                        // Gradient overlay for a refined look
+                                        Container(
+                                          decoration: BoxDecoration(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            gradient: const LinearGradient(
+                                              colors: [
+                                                Colors.transparent,
+                                                Colors.black54
+                                              ],
+                                              begin: Alignment.topCenter,
+                                              end: Alignment.bottomCenter,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     );
                                   },
                                 ),
                               ),
                               Positioned(
                                 bottom: 10,
+                                right: 10,
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(
                                       vertical: 4, horizontal: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.5),
+                                    color: Colors.black54,
                                     borderRadius: BorderRadius.circular(12),
                                   ),
                                   child: Text(
@@ -491,17 +637,24 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                               ),
                             ],
                           ),
-                    16.kH,
-                    Text(displayName, style: kTeritary),
-                    8.kH,
-                    Text(displayBio,
-                        style:
-                            const TextStyle(fontSize: 16, color: Colors.grey)),
-                    16.kH,
+                    const SizedBox(height: 16),
+                    Text(
+                      displayName,
+                      style: kTeritary.copyWith(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      displayBio,
+                      style: const TextStyle(fontSize: 16, color: Colors.grey),
+                    ),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         const Icon(Icons.star, color: Colors.orange, size: 16),
-                        4.kW,
+                        const SizedBox(width: 4),
                         Text(
                           _overallRating.toStringAsFixed(1),
                           style: const TextStyle(
@@ -509,29 +662,38 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                         ),
                       ],
                     ),
-                    16.kH,
+                    const SizedBox(height: 16),
+                    // Info chips section using the new InfoChip widget with onTap callbacks
                     Wrap(
                       spacing: 10.0,
                       runSpacing: 10.0,
                       children: [
                         if (widget.type == "3")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.fastfood,
                             label: getTranslatedTypeOfRestaurant(
                               context,
                               estate['TypeofRestaurant'] ??
                                   widget.typeOfRestaurant,
                             ),
+                            onTap: () => _showOptionsList(
+                              getTranslated(context, "Type of Restaurant"),
+                              restaurantOptions.cast<Map<String, dynamic>>(),
+                            ),
                           ),
                         if (widget.type == "3" || widget.type == "2")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.home,
                             label: getTranslatedSessions(
                               context,
                               estate['Sessions'] ?? widget.sessions,
                             ),
+                            onTap: () => _showOptionsList(
+                              getTranslated(context, "Sessions"),
+                              sessionsOptions.cast<Map<String, dynamic>>(),
+                            ),
                           ),
-                        ChipWidget(
+                        InfoChip(
                           icon: Icons.grain,
                           label: widget.type == "1"
                               ? getTranslatedHotelEntry(
@@ -542,8 +704,21 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                   context,
                                   estate['Entry'] ?? widget.entry,
                                 ),
+                          onTap: () {
+                            if (widget.type == "1") {
+                              _showOptionsList(
+                                getTranslated(context, "Hotel Entry"),
+                                hotelEntryOptions.cast<Map<String, dynamic>>(),
+                              );
+                            } else {
+                              _showOptionsList(
+                                getTranslated(context, "Entry"),
+                                entryOptions.cast<Map<String, dynamic>>(),
+                              );
+                            }
+                          },
                         ),
-                        ChipWidget(
+                        InfoChip(
                           icon: Icons.music_note,
                           label: (widget.type == "3" || widget.type == "1")
                               ? ((estate['Music'] ?? widget.music) == "1"
@@ -561,27 +736,27 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                       context, "There is no music")),
                         ),
                         if (widget.type != "1")
-                          ChipWidget(
-                            icon: Icons.boy,
+                          InfoChip(
+                            icon: Icons.child_care,
                             label: (estate['HasKidsArea'] ??
                                         widget.hasKidsArea) ==
                                     "1"
                                 ? getTranslated(context, "We have kids area")
                                 : getTranslated(
-                                    context, "We dont have kids area"),
+                                    context, "We don't have kids area"),
                           ),
                         if (widget.type == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.bathtub,
                             label: (estate['HasJacuzziInRoom'] ??
                                         widget.hasJacuzziInRoom) ==
                                     "1"
-                                ? getTranslated(context, "We have jaccuzzi")
+                                ? getTranslated(context, "We have jacuzzi")
                                 : getTranslated(
-                                    context, "We dont have jaccuzzi"),
+                                    context, "We don't have jacuzzi"),
                           ),
-                        ChipWidget(
-                          icon: Icons.car_rental,
+                        InfoChip(
+                          icon: Icons.directions_car,
                           label: (estate['HasValet'] ?? widget.hasValet) == "1"
                               ? getTranslated(
                                   context, "Valet service available")
@@ -589,7 +764,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                   context, "No valet service available"),
                         ),
                         if ((estate['HasValet'] ?? widget.hasValet) == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.money,
                             label: (estate['ValetWithFees'] ??
                                         widget.valetWithFees) ==
@@ -598,7 +773,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                 : getTranslated(context, "Valet is free"),
                           ),
                         if (widget.type == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.pool,
                             label: (estate['HasSwimmingPool'] ??
                                         widget.hasSwimmingPool) ==
@@ -606,34 +781,35 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                 ? getTranslated(
                                     context, "We have swimming pool")
                                 : getTranslated(
-                                    context, "We dont have swimming pool"),
+                                    context, "We don't have swimming pool"),
                           ),
                         if (widget.type == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.spa,
                             label:
                                 (estate['HasMassage'] ?? widget.hasMassage) ==
                                         "1"
                                     ? getTranslated(context, "We have massage")
                                     : getTranslated(
-                                        context, "We dont have massage"),
+                                        context, "We don't have massage"),
                           ),
                         if (widget.type == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.fitness_center,
                             label: (estate['HasGym'] ?? widget.hasGym) == "1"
-                                ? getTranslated(context, "We have Gym")
-                                : getTranslated(context, "We dont have Gym"),
+                                ? getTranslated(context, "We have gym")
+                                : getTranslated(context, "We don't have gym"),
                           ),
                         if (widget.type == "1")
-                          ChipWidget(
+                          InfoChip(
                             icon: Icons.content_cut,
-                            label: (estate['HasBarber'] ?? widget.hasBarber) ==
-                                    "1"
-                                ? getTranslated(context, "We have barber")
-                                : getTranslated(context, "We dont have barber"),
+                            label:
+                                (estate['HasBarber'] ?? widget.hasBarber) == "1"
+                                    ? getTranslated(context, "We have barber")
+                                    : getTranslated(
+                                        context, "We don't have barber"),
                           ),
-                        ChipWidget(
+                        InfoChip(
                           icon: Icons.smoking_rooms,
                           label: (estate['IsSmokingAllowed'] ??
                                       widget.isSmokingAllowed) ==
@@ -644,32 +820,37 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                         ),
                       ],
                     ),
-                    16.kH,
+                    const SizedBox(height: 16),
                     AutoSizeText(
                       getTranslated(context, "Feedback"),
-                      style: kTeritary,
+                      style: kTeritary.copyWith(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                       maxLines: 1,
                       minFontSize: 12,
                     ),
-                    8.kH,
+                    const SizedBox(height: 8),
                     _feedbackList.isEmpty
                         ? const Center(child: Text("No feedback available."))
-                        : Container(
+                        : SizedBox(
                             height: 300,
-                            child: ListView.builder(
+                            child: ListView.separated(
                               scrollDirection: Axis.horizontal,
                               itemCount: _feedbackList.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(width: 16),
                               itemBuilder: (context, index) {
                                 final feedback = _feedbackList[index];
                                 return Container(
-                                  margin: const EdgeInsets.only(right: 16.0),
                                   width:
                                       MediaQuery.of(context).size.width * 0.8,
                                   child: Card(
                                     shape: RoundedRectangleBorder(
                                       borderRadius: BorderRadius.circular(15),
                                     ),
-                                    elevation: 3,
+                                    elevation: 4,
+                                    margin: EdgeInsets.zero,
                                     child: Padding(
                                       padding: const EdgeInsets.all(16.0),
                                       child: Column(
@@ -692,9 +873,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                                     ? CachedNetworkImageProvider(
                                                         feedback[
                                                             'profileImageUrl'])
-                                                    : AssetImage(
-                                                            'assets/images/default_avatar.png')
-                                                        as ImageProvider,
+                                                    : null,
                                                 child: feedback['profileImageUrl'] ==
                                                             null ||
                                                         feedback[
@@ -772,14 +951,18 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                           ),
                                           const Divider(),
                                           const SizedBox(height: 8),
-                                          AutoSizeText(
-                                            feedback['feedback'] ??
-                                                getTranslated(context,
-                                                    'No feedback provided'),
-                                            style:
-                                                const TextStyle(fontSize: 14),
-                                            maxLines: 10,
-                                            minFontSize: 10,
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              child: AutoSizeText(
+                                                feedback['feedback'] ??
+                                                    getTranslated(context,
+                                                        'No feedback provided'),
+                                                style: const TextStyle(
+                                                    fontSize: 14),
+                                                maxLines: 10,
+                                                minFontSize: 10,
+                                              ),
+                                            ),
                                           ),
                                           const SizedBox(height: 10),
                                           Row(
@@ -855,17 +1038,15 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                               },
                             ),
                           ),
-                    24.kH,
+                    const SizedBox(height: 24),
                     CustomButton(
                       text: getTranslated(context, "View your Qr Code"),
                       onPressed: () {
                         if (isLoading) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                getTranslated(context,
-                                    'Data is still loading. Please try again shortly.'),
-                              ),
+                              content: Text(getTranslated(context,
+                                  'Data is still loading. Please try again shortly.')),
                             ),
                           );
                         } else if (estate.isEmpty ||
@@ -876,10 +1057,8 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                           print('NameEn: ${estate['NameEn']}');
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text(
-                                getTranslated(context,
-                                    'Unable to load QR Code. Please ensure estate data is complete.'),
-                              ),
+                              content: Text(getTranslated(context,
+                                  'Unable to load QR Code. Please ensure estate data is complete.')),
                             ),
                           );
                         } else {
@@ -896,7 +1075,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                         }
                       },
                     ),
-                    16.kH,
+                    const SizedBox(height: 16),
                   ],
                 ),
               ),

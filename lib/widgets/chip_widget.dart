@@ -1,55 +1,62 @@
 import 'package:daimond_host_provider/constants/colors.dart';
-import 'package:daimond_host_provider/extension/sized_box_extension.dart';
 import 'package:flutter/material.dart';
 
-class ChipWidget extends StatelessWidget {
+class InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
+  final VoidCallback? onTap;
 
-  const ChipWidget({
-    super.key,
+  const InfoChip({
+    Key? key,
     required this.icon,
     required this.label,
-  });
+    this.onTap,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-          horizontal: 16, vertical: 10), // Increased padding
-      margin: const EdgeInsets.only(
-          bottom: 8), // Add margin for spacing between chips
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(30), // Rounded corners
-        gradient: kPrimaryGradient,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 2,
-            blurRadius: 10,
-            offset: const Offset(0, 4), // Adjusted shadow for more depth
+    // If onTap is provided, use an ActionChip to show the clickable effect.
+    if (onTap != null) {
+      return ActionChip(
+        avatar: Icon(icon, color: kDeepPurpleColor, size: 20),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
           ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: Colors.white, size: 20), // Adjust icon size
-          8.kW, // Adjusted spacing between icon and text
-          Flexible(
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 14, // Slightly larger font size
-                fontWeight: FontWeight.w600, // Increased font weight
-              ),
-              overflow:
-                  TextOverflow.ellipsis, // Truncate long text with ellipsis
-            ),
+        ),
+        onPressed: onTap,
+        backgroundColor: Colors.white,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: Colors.grey.shade300,
           ),
-        ],
-      ),
-    );
+        ),
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      );
+    } else {
+      return Chip(
+        avatar: Icon(icon, color: kDeepPurpleColor, size: 20),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+        backgroundColor: Colors.white,
+        shape: StadiumBorder(
+          side: BorderSide(
+            color: Colors.grey.shade300,
+          ),
+        ),
+        elevation: 2,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      );
+    }
   }
 }
