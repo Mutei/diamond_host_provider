@@ -3,12 +3,14 @@ import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
 import 'package:daimond_host_provider/extension/sized_box_extension.dart';
 import 'package:daimond_host_provider/screens/qr_image_screen.dart';
+import 'package:daimond_host_provider/animations_widgets/build_shimmer_loader.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_cache_manager/flutter_cache_manager.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:intl/intl.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../backend/booking_services.dart';
 import '../backend/estate_services.dart';
@@ -229,7 +231,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
             .child('${widget.estateId}/$index.jpg');
         final imageUrl = await storageRef.getDownloadURL();
         imageUrls.add(imageUrl);
-        await _cacheManager.getSingleFile(imageUrl);
+        await _cacheManager.getSingleFile(imageUrl); // Cache the image
       } catch (e) {
         hasMoreImages = false;
       }
@@ -498,6 +500,20 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
     );
   }
 
+  // Widget _buildShimmerLoader() {
+  //   return Shimmer.fromColors(
+  //     baseColor: Colors.grey[300]!,
+  //     highlightColor: Colors.grey[100]!,
+  //     child: Container(
+  //       height: 200,
+  //       decoration: BoxDecoration(
+  //         borderRadius: BorderRadius.circular(15),
+  //         color: Colors.white,
+  //       ),
+  //     ),
+  //   );
+  // }
+
   @override
   Widget build(BuildContext context) {
     final String languageCode = Localizations.localeOf(context).languageCode;
@@ -548,7 +564,38 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
         ],
       ),
       body: isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const ShimmerLoader(),
+                const SizedBox(height: 16),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    width: 150,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Shimmer.fromColors(
+                  baseColor: Colors.grey[300]!,
+                  highlightColor: Colors.grey[100]!,
+                  child: Container(
+                    width: 200,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            )
           : SingleChildScrollView(
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -556,6 +603,7 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     // Image carousel with gradient overlay
+                    // Displaying the fetched images in a carousel
                     _imageUrls.isEmpty
                         ? Container(
                             height: 200,
@@ -563,8 +611,17 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                               borderRadius: BorderRadius.circular(15),
                               color: Colors.grey[200],
                             ),
-                            child: const Center(
-                                child: CircularProgressIndicator()),
+                            child: Shimmer.fromColors(
+                              baseColor: Colors.grey[300]!,
+                              highlightColor: Colors.grey[100]!,
+                              child: Container(
+                                height: 200,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(15),
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
                           )
                         : Stack(
                             children: [
@@ -594,21 +651,6 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                                     const Icon(Icons.error),
                                             fit: BoxFit.cover,
                                             width: double.infinity,
-                                          ),
-                                        ),
-                                        // Gradient overlay for a refined look
-                                        Container(
-                                          decoration: BoxDecoration(
-                                            borderRadius:
-                                                BorderRadius.circular(15),
-                                            gradient: const LinearGradient(
-                                              colors: [
-                                                Colors.transparent,
-                                                Colors.black54
-                                              ],
-                                              begin: Alignment.topCenter,
-                                              end: Alignment.bottomCenter,
-                                            ),
                                           ),
                                         ),
                                       ],
@@ -664,6 +706,162 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                     ),
                     const SizedBox(height: 16),
                     // Info chips section using the new InfoChip widget with onTap callbacks
+                    // Wrap(
+                    //   spacing: 10.0,
+                    //   runSpacing: 10.0,
+                    //   children: [
+                    //     if (widget.type == "3")
+                    //       InfoChip(
+                    //         icon: Icons.fastfood,
+                    //         label: getTranslatedTypeOfRestaurant(
+                    //           context,
+                    //           estate['TypeofRestaurant'] ??
+                    //               widget.typeOfRestaurant,
+                    //         ),
+                    //         onTap: () => _showOptionsList(
+                    //           getTranslated(context, "Type of Restaurant"),
+                    //           restaurantOptions.cast<Map<String, dynamic>>(),
+                    //         ),
+                    //       ),
+                    //     if (widget.type == "3" || widget.type == "2")
+                    //       InfoChip(
+                    //         icon: Icons.home,
+                    //         label: getTranslatedSessions(
+                    //           context,
+                    //           estate['Sessions'] ?? widget.sessions,
+                    //         ),
+                    //         onTap: () => _showOptionsList(
+                    //           getTranslated(context, "Sessions"),
+                    //           sessionsOptions.cast<Map<String, dynamic>>(),
+                    //         ),
+                    //       ),
+                    //     InfoChip(
+                    //       icon: Icons.grain,
+                    //       label: widget.type == "1"
+                    //           ? getTranslatedHotelEntry(
+                    //               context,
+                    //               estate['Entry'] ?? widget.entry,
+                    //             )
+                    //           : getTranslatedEntry(
+                    //               context,
+                    //               estate['Entry'] ?? widget.entry,
+                    //             ),
+                    //       onTap: () {
+                    //         if (widget.type == "1") {
+                    //           _showOptionsList(
+                    //             getTranslated(context, "Hotel Entry"),
+                    //             hotelEntryOptions.cast<Map<String, dynamic>>(),
+                    //           );
+                    //         } else {
+                    //           _showOptionsList(
+                    //             getTranslated(context, "Entry"),
+                    //             entryOptions.cast<Map<String, dynamic>>(),
+                    //           );
+                    //         }
+                    //       },
+                    //     ),
+                    //     InfoChip(
+                    //       icon: Icons.music_note,
+                    //       label: (widget.type == "3" || widget.type == "1")
+                    //           ? ((estate['Music'] ?? widget.music) == "1"
+                    //               ? getTranslated(context, "There is music")
+                    //               : getTranslated(context, "There is no music"))
+                    //           : (widget.type == "2"
+                    //               ? ((estate['Music'] ?? widget.music) == "1"
+                    //                   ? getTranslatedCoffeeMusicOptions(
+                    //                       context,
+                    //                       estate['Lstmusic'] ?? widget.lstMusic,
+                    //                     )
+                    //                   : getTranslated(
+                    //                       context, "There is no music"))
+                    //               : getTranslated(
+                    //                   context, "There is no music")),
+                    //     ),
+                    //     if (widget.type != "1")
+                    //       InfoChip(
+                    //         icon: Icons.child_care,
+                    //         label: (estate['HasKidsArea'] ??
+                    //                     widget.hasKidsArea) ==
+                    //                 "1"
+                    //             ? getTranslated(context, "We have kids area")
+                    //             : getTranslated(
+                    //                 context, "We don't have kids area"),
+                    //       ),
+                    //     if (widget.type == "1")
+                    //       InfoChip(
+                    //         icon: Icons.bathtub,
+                    //         label: (estate['HasJacuzziInRoom'] ??
+                    //                     widget.hasJacuzziInRoom) ==
+                    //                 "1"
+                    //             ? getTranslated(context, "We have jacuzzi")
+                    //             : getTranslated(
+                    //                 context, "We don't have jacuzzi"),
+                    //       ),
+                    //     InfoChip(
+                    //       icon: Icons.directions_car,
+                    //       label: (estate['HasValet'] ?? widget.hasValet) == "1"
+                    //           ? getTranslated(
+                    //               context, "Valet service available")
+                    //           : getTranslated(
+                    //               context, "No valet service available"),
+                    //     ),
+                    //     if ((estate['HasValet'] ?? widget.hasValet) == "1")
+                    //       InfoChip(
+                    //         icon: Icons.money,
+                    //         label: (estate['ValetWithFees'] ??
+                    //                     widget.valetWithFees) ==
+                    //                 "1"
+                    //             ? getTranslated(context, "Valet is not free")
+                    //             : getTranslated(context, "Valet is free"),
+                    //       ),
+                    //     if (widget.type == "1")
+                    //       InfoChip(
+                    //         icon: Icons.pool,
+                    //         label: (estate['HasSwimmingPool'] ??
+                    //                     widget.hasSwimmingPool) ==
+                    //                 "1"
+                    //             ? getTranslated(
+                    //                 context, "We have swimming pool")
+                    //             : getTranslated(
+                    //                 context, "We don't have swimming pool"),
+                    //       ),
+                    //     if (widget.type == "1")
+                    //       InfoChip(
+                    //         icon: Icons.spa,
+                    //         label:
+                    //             (estate['HasMassage'] ?? widget.hasMassage) ==
+                    //                     "1"
+                    //                 ? getTranslated(context, "We have massage")
+                    //                 : getTranslated(
+                    //                     context, "We don't have massage"),
+                    //       ),
+                    //     if (widget.type == "1")
+                    //       InfoChip(
+                    //         icon: Icons.fitness_center,
+                    //         label: (estate['HasGym'] ?? widget.hasGym) == "1"
+                    //             ? getTranslated(context, "We have gym")
+                    //             : getTranslated(context, "We don't have gym"),
+                    //       ),
+                    //     if (widget.type == "1")
+                    //       InfoChip(
+                    //         icon: Icons.content_cut,
+                    //         label:
+                    //             (estate['HasBarber'] ?? widget.hasBarber) == "1"
+                    //                 ? getTranslated(context, "We have barber")
+                    //                 : getTranslated(
+                    //                     context, "We don't have barber"),
+                    //       ),
+                    //     InfoChip(
+                    //       icon: Icons.smoking_rooms,
+                    //       label: (estate['IsSmokingAllowed'] ??
+                    //                   widget.isSmokingAllowed) ==
+                    //               "1"
+                    //           ? getTranslated(context, "Smoking is allowed")
+                    //           : getTranslated(
+                    //               context, "Smoking is not allowed"),
+                    //     ),
+                    //   ],
+                    // ),
                     Wrap(
                       spacing: 10.0,
                       runSpacing: 10.0,
@@ -693,131 +891,141 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                               sessionsOptions.cast<Map<String, dynamic>>(),
                             ),
                           ),
-                        InfoChip(
-                          icon: Icons.grain,
-                          label: widget.type == "1"
-                              ? getTranslatedHotelEntry(
-                                  context,
-                                  estate['Entry'] ?? widget.entry,
-                                )
-                              : getTranslatedEntry(
-                                  context,
-                                  estate['Entry'] ?? widget.entry,
-                                ),
-                          onTap: () {
-                            if (widget.type == "1") {
+                        if (widget.type == "1")
+                          InfoChip(
+                            icon: Icons.grain,
+                            label: getTranslatedHotelEntry(
+                              context,
+                              estate['Entry'] ?? widget.entry,
+                            ),
+                            onTap: () {
                               _showOptionsList(
                                 getTranslated(context, "Hotel Entry"),
                                 hotelEntryOptions.cast<Map<String, dynamic>>(),
                               );
-                            } else {
+                            },
+                          ),
+                        if (widget.type != "1")
+                          InfoChip(
+                            icon: Icons.grain,
+                            label: getTranslatedEntry(
+                              context,
+                              estate['Entry'] ?? widget.entry,
+                            ),
+                            onTap: () {
                               _showOptionsList(
                                 getTranslated(context, "Entry"),
                                 entryOptions.cast<Map<String, dynamic>>(),
                               );
-                            }
-                          },
-                        ),
-                        InfoChip(
-                          icon: Icons.music_note,
-                          label: (widget.type == "3" || widget.type == "1")
-                              ? ((estate['Music'] ?? widget.music) == "1"
-                                  ? getTranslated(context, "There is music")
-                                  : getTranslated(context, "There is no music"))
-                              : (widget.type == "2"
-                                  ? ((estate['Music'] ?? widget.music) == "1"
-                                      ? getTranslatedCoffeeMusicOptions(
-                                          context,
-                                          estate['Lstmusic'] ?? widget.lstMusic,
-                                        )
-                                      : getTranslated(
-                                          context, "There is no music"))
-                                  : getTranslated(
-                                      context, "There is no music")),
-                        ),
-                        if (widget.type != "1")
+                            },
+                          ),
+                        if ((widget.type == "3" || widget.type == "1") &&
+                            (estate['Music'] != null &&
+                                estate['Music'] != "" &&
+                                estate['Music'] != "0"))
+                          InfoChip(
+                            icon: Icons.music_note,
+                            label: estate['Music'] == "1"
+                                ? getTranslated(context, "There is music")
+                                : getTranslated(context, "There is no music"),
+                          ),
+                        if (widget.type == "2" &&
+                            (estate['Music'] != null &&
+                                estate['Music'] != "" &&
+                                estate['Music'] != "0"))
+                          InfoChip(
+                            icon: Icons.music_note,
+                            label: estate['Music'] == "1"
+                                ? getTranslatedCoffeeMusicOptions(
+                                    context,
+                                    estate['Lstmusic'] ?? widget.lstMusic,
+                                  )
+                                : getTranslated(context, "There is no music"),
+                          ),
+                        if ((widget.type == "2" || widget.type == "3") &&
+                            (estate['HasKidsArea'] != null &&
+                                estate['HasKidsArea'] != "" &&
+                                estate['HasKidsArea'] != "0"))
                           InfoChip(
                             icon: Icons.child_care,
-                            label: (estate['HasKidsArea'] ??
-                                        widget.hasKidsArea) ==
-                                    "1"
+                            label: estate['HasKidsArea'] == "1"
                                 ? getTranslated(context, "We have kids area")
                                 : getTranslated(
                                     context, "We don't have kids area"),
                           ),
-                        if (widget.type == "1")
+                        if (widget.type == "1" &&
+                            (estate['HasJacuzziInRoom'] != null &&
+                                estate['HasJacuzziInRoom'] != "" &&
+                                estate['HasJacuzziInRoom'] != "0"))
                           InfoChip(
                             icon: Icons.bathtub,
-                            label: (estate['HasJacuzziInRoom'] ??
-                                        widget.hasJacuzziInRoom) ==
-                                    "1"
+                            label: estate['HasJacuzziInRoom'] == "1"
                                 ? getTranslated(context, "We have jacuzzi")
                                 : getTranslated(
                                     context, "We don't have jacuzzi"),
                           ),
-                        InfoChip(
-                          icon: Icons.directions_car,
-                          label: (estate['HasValet'] ?? widget.hasValet) == "1"
-                              ? getTranslated(
-                                  context, "Valet service available")
-                              : getTranslated(
-                                  context, "No valet service available"),
-                        ),
-                        if ((estate['HasValet'] ?? widget.hasValet) == "1")
+                        if (estate['HasValet'] == "1")
+                          InfoChip(
+                            icon: Icons.directions_car,
+                            label: getTranslated(
+                                context, "Valet service available"),
+                          ),
+                        if (estate['HasValet'] == "1")
                           InfoChip(
                             icon: Icons.money,
-                            label: (estate['ValetWithFees'] ??
-                                        widget.valetWithFees) ==
-                                    "1"
+                            label: estate['ValetWithFees'] == "1"
                                 ? getTranslated(context, "Valet is not free")
                                 : getTranslated(context, "Valet is free"),
                           ),
-                        if (widget.type == "1")
+                        if (widget.type == "1" &&
+                            (estate['HasSwimmingPool'] != null &&
+                                estate['HasSwimmingPool'] != "" &&
+                                estate['HasSwimmingPool'] != "0"))
                           InfoChip(
                             icon: Icons.pool,
-                            label: (estate['HasSwimmingPool'] ??
-                                        widget.hasSwimmingPool) ==
-                                    "1"
+                            label: estate['HasSwimmingPool'] == "1"
                                 ? getTranslated(
                                     context, "We have swimming pool")
                                 : getTranslated(
                                     context, "We don't have swimming pool"),
                           ),
-                        if (widget.type == "1")
+                        if (widget.type == "1" &&
+                            (estate['HasMassage'] != null &&
+                                estate['HasMassage'] != "" &&
+                                estate['HasMassage'] != "0"))
                           InfoChip(
                             icon: Icons.spa,
-                            label:
-                                (estate['HasMassage'] ?? widget.hasMassage) ==
-                                        "1"
-                                    ? getTranslated(context, "We have massage")
-                                    : getTranslated(
-                                        context, "We don't have massage"),
+                            label: estate['HasMassage'] == "1"
+                                ? getTranslated(context, "We have massage")
+                                : getTranslated(
+                                    context, "We don't have massage"),
                           ),
-                        if (widget.type == "1")
+                        if (widget.type == "1" &&
+                            (estate['HasGym'] != null &&
+                                estate['HasGym'] != "" &&
+                                estate['HasGym'] != "0"))
                           InfoChip(
                             icon: Icons.fitness_center,
-                            label: (estate['HasGym'] ?? widget.hasGym) == "1"
+                            label: estate['HasGym'] == "1"
                                 ? getTranslated(context, "We have gym")
                                 : getTranslated(context, "We don't have gym"),
                           ),
-                        if (widget.type == "1")
+                        if (widget.type == "1" &&
+                            (estate['HasBarber'] != null &&
+                                estate['HasBarber'] != "" &&
+                                estate['HasBarber'] != "0"))
                           InfoChip(
                             icon: Icons.content_cut,
-                            label:
-                                (estate['HasBarber'] ?? widget.hasBarber) == "1"
-                                    ? getTranslated(context, "We have barber")
-                                    : getTranslated(
-                                        context, "We don't have barber"),
+                            label: estate['HasBarber'] == "1"
+                                ? getTranslated(context, "We have barber")
+                                : getTranslated(
+                                    context, "We don't have barber"),
                           ),
-                        InfoChip(
-                          icon: Icons.smoking_rooms,
-                          label: (estate['IsSmokingAllowed'] ??
-                                      widget.isSmokingAllowed) ==
-                                  "1"
-                              ? getTranslated(context, "Smoking is allowed")
-                              : getTranslated(
-                                  context, "Smoking is not allowed"),
-                        ),
+                        if (estate['IsSmokingAllowed'] == "1")
+                          InfoChip(
+                            icon: Icons.smoking_rooms,
+                            label: getTranslated(context, "Smoking is allowed"),
+                          ),
                       ],
                     ),
                     const SizedBox(height: 16),

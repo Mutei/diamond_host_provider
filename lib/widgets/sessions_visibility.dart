@@ -6,11 +6,13 @@ import '../localization/language_constants.dart';
 class SessionsVisibility extends StatefulWidget {
   final bool isVisible;
   final Function(bool, String) onCheckboxChanged;
+  final List<String> selectedSessions; // Accept selectedSessions
 
   const SessionsVisibility({
     super.key,
     required this.isVisible,
     required this.onCheckboxChanged,
+    required this.selectedSessions, // Add selectedSessions parameter
   });
 
   @override
@@ -18,10 +20,6 @@ class SessionsVisibility extends StatefulWidget {
 }
 
 class _SessionsVisibilityState extends State<SessionsVisibility> {
-  bool checkInternal = false;
-  bool checkExternal = false;
-  bool checkPrivateSessions = false;
-
   @override
   Widget build(BuildContext context) {
     if (!widget.isVisible) return Container();
@@ -31,27 +29,27 @@ class _SessionsVisibilityState extends State<SessionsVisibility> {
         _buildCheckboxRow(
           context,
           'Internal sessions',
-          checkInternal,
+          widget.selectedSessions
+              .contains('Internal sessions'), // Check if it's selected
           (value) {
-            setState(() => checkInternal = value);
             widget.onCheckboxChanged(value, 'Internal sessions');
           },
         ),
         _buildCheckboxRow(
           context,
           'External sessions',
-          checkExternal,
+          widget.selectedSessions
+              .contains('External sessions'), // Check if it's selected
           (value) {
-            setState(() => checkExternal = value);
             widget.onCheckboxChanged(value, 'External sessions');
           },
         ),
         _buildCheckboxRow(
           context,
           'Private sessions',
-          checkPrivateSessions,
+          widget.selectedSessions
+              .contains('Private sessions'), // Check if it's selected
           (value) {
-            setState(() => checkPrivateSessions = value);
             widget.onCheckboxChanged(value, 'Private sessions');
           },
         ),

@@ -80,6 +80,7 @@ dependencies:
   in_app_update: ^4.2.3
   file_picker: ^8.1.6
   flutter_rating_bar: ^4.0.1
+  shimmer: ^3.0.0
 
 
 dev_dependencies:

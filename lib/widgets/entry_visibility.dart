@@ -6,11 +6,13 @@ import '../localization/language_constants.dart';
 class EntryVisibility extends StatefulWidget {
   final bool isVisible;
   final Function(bool, String) onCheckboxChanged;
+  final List<String> selectedEntries; // Add selectedEntries to the widget
 
   const EntryVisibility({
     super.key,
     required this.isVisible,
     required this.onCheckboxChanged,
+    required this.selectedEntries,
   });
 
   @override
@@ -18,10 +20,6 @@ class EntryVisibility extends StatefulWidget {
 }
 
 class _EntryVisibilityState extends State<EntryVisibility> {
-  bool checkFamilial = false;
-  bool checkSingle = false;
-  bool checkMixed = false;
-
   @override
   Widget build(BuildContext context) {
     if (!widget.isVisible) return Container();
@@ -31,27 +29,27 @@ class _EntryVisibilityState extends State<EntryVisibility> {
         _buildCheckboxRow(
           context,
           'Familial',
-          checkFamilial,
+          widget.selectedEntries
+              .contains('Familial'), // Check if Familial is selected
           (value) {
-            setState(() => checkFamilial = value);
             widget.onCheckboxChanged(value, 'Familial');
           },
         ),
         _buildCheckboxRow(
           context,
           'Single2',
-          checkSingle,
+          widget.selectedEntries
+              .contains('Single'), // Check if Single is selected
           (value) {
-            setState(() => checkSingle = value);
             widget.onCheckboxChanged(value, 'Single');
           },
         ),
         _buildCheckboxRow(
           context,
           'mixed',
-          checkMixed,
+          widget.selectedEntries
+              .contains('mixed'), // Check if mixed is selected
           (value) {
-            setState(() => checkMixed = value);
             widget.onCheckboxChanged(value, 'mixed');
           },
         ),

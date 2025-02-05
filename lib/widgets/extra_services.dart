@@ -6,11 +6,13 @@ import '../localization/language_constants.dart';
 class AdditionalsRestaurantCoffee extends StatefulWidget {
   final bool isVisible;
   final Function(bool, String) onCheckboxChanged;
+  final List<String> selectedAdditionals; // Accept selectedAdditionals
 
   const AdditionalsRestaurantCoffee({
     super.key,
     required this.isVisible,
     required this.onCheckboxChanged,
+    required this.selectedAdditionals, // Add selectedAdditionals parameter
   });
 
   @override
@@ -35,18 +37,18 @@ class _AdditionalsRestaurantCoffeeState
         _buildCheckboxRow(
           context,
           "Is there Hookah?",
-          checkHookah,
+          widget.selectedAdditionals
+              .contains("Is there Hookah?"), // Check if it's selected
           (value) {
-            setState(() => checkHookah = value);
             widget.onCheckboxChanged(value, "Is there Hookah?");
           },
         ),
         _buildCheckboxRow(
           context,
           "Is there Buffet?",
-          checkBuffet,
+          widget.selectedAdditionals
+              .contains("Is there Buffet?"), // Check if it's selected
           (value) {
-            setState(() => checkBuffet = value);
             widget.onCheckboxChanged(value, "Is there Buffet?");
             if (!value) {
               checkBreakfastBuffet = false;
@@ -61,9 +63,9 @@ class _AdditionalsRestaurantCoffeeState
               _buildCheckboxRow(
                 context,
                 "Is there a breakfast buffet?",
-                checkBreakfastBuffet,
+                widget.selectedAdditionals.contains(
+                    "Is there a breakfast buffet?"), // Check if it's selected
                 (value) {
-                  setState(() => checkBreakfastBuffet = value);
                   widget.onCheckboxChanged(
                       value, "Is there a breakfast buffet?");
                 },
@@ -71,18 +73,18 @@ class _AdditionalsRestaurantCoffeeState
               _buildCheckboxRow(
                 context,
                 "Is there a lunch buffet?",
-                checkLunchBuffet,
+                widget.selectedAdditionals.contains(
+                    "Is there a lunch buffet?"), // Check if it's selected
                 (value) {
-                  setState(() => checkLunchBuffet = value);
                   widget.onCheckboxChanged(value, "Is there a lunch buffet?");
                 },
               ),
               _buildCheckboxRow(
                 context,
                 "Is there a dinner buffet?",
-                checkDinnerBuffet,
+                widget.selectedAdditionals.contains(
+                    "Is there a dinner buffet?"), // Check if it's selected
                 (value) {
-                  setState(() => checkDinnerBuffet = value);
                   widget.onCheckboxChanged(value, "Is there a dinner buffet?");
                 },
               ),

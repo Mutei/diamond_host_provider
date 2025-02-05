@@ -133,22 +133,74 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
   // New state variable to store the PDF URL
   String? facilityPdfUrl;
   String? taxPdfUrl;
+  List<String> selectedEntries = [];
+  List<String> selectedSessions = [];
+  List<String> selectedAdditionals = [];
+  List<String> selectedRestaurantTypes = [];
+
+  void _onRestaurantTypeCheckboxChanged(bool value, String type) {
+    setState(() {
+      if (value) {
+        // Add to the list if checked
+        selectedRestaurantTypes.add(type);
+      } else {
+        // Remove from the list if unchecked
+        selectedRestaurantTypes.remove(type);
+      }
+    });
+  }
+
+  void _onAdditionalCheckboxChanged(bool value, String type) {
+    setState(() {
+      if (value) {
+        // Add to the list if checked
+        selectedAdditionals.add(type);
+      } else {
+        // Remove from the list if unchecked
+        selectedAdditionals.remove(type);
+      }
+    });
+  }
+
+  void _onSessionCheckboxChanged(bool value, String type) {
+    setState(() {
+      if (value) {
+        // Add to the list if checked
+        selectedSessions.add(type);
+      } else {
+        // Remove from the list if unchecked
+        selectedSessions.remove(type);
+      }
+    });
+  }
+
+  void _onCheckboxChanged(bool value, String type) {
+    setState(() {
+      if (value) {
+        // Add to the list if checked
+        selectedEntries.add(type);
+      } else {
+        // Remove from the list if unchecked
+        selectedEntries.remove(type);
+      }
+    });
+  }
 
   bool _areRequiredFieldsFilled() {
     return nameController.text.isNotEmpty &&
-        bioController.text.isNotEmpty &&
         enNameController.text.isNotEmpty &&
-        enBioController.text.isNotEmpty &&
-        // taxNumberController.text.isNotEmpty &&
+        menuLinkController.text.isNotEmpty &&
         (countryValue != null && countryValue!.isNotEmpty) &&
         (stateValue != null && stateValue!.isNotEmpty) &&
         (cityValue != null && cityValue!.isNotEmpty) &&
+        selectedRestaurantTypes.isNotEmpty &&
+        selectedSessions.isNotEmpty &&
+        selectedEntries
+            .isNotEmpty && // Check if at least one restaurant type is selected
         ((widget.userType == "1" && hasSwimmingPool) ||
             (widget.userType == "2" || widget.userType == "3") &&
                 (facilityPdfUrl != null && facilityPdfUrl!.isNotEmpty) &&
-                (taxPdfUrl != null &&
-                    taxPdfUrl!
-                        .isNotEmpty)); // Adjust based on your requirements
+                (taxPdfUrl != null && taxPdfUrl!.isNotEmpty));
   }
 
   @override
@@ -508,19 +560,14 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                   ),
                   Container(
                     margin: const EdgeInsetsDirectional.only(
-                      start: 50,
+                      start: 30,
                     ),
+                    padding: (const EdgeInsets.only(right: 25)),
                     child: RestaurantTypeVisibility(
                       isVisible: widget.userType == "3",
-                      onCheckboxChanged: (value, type) {
-                        setState(() {
-                          if (value) {
-                            listTypeOfRestaurant.add(type);
-                          } else {
-                            listTypeOfRestaurant.remove(type);
-                          }
-                        });
-                      },
+                      onCheckboxChanged: _onRestaurantTypeCheckboxChanged,
+                      selectedRestaurantTypes:
+                          selectedRestaurantTypes, // Pass the selected restaurant types list
                     ),
                   ),
                   15.kH,
@@ -539,15 +586,9 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                     child: EntryVisibility(
                       isVisible:
                           widget.userType == "3" || widget.userType == "2",
-                      onCheckboxChanged: (value, type) {
-                        setState(() {
-                          if (value) {
-                            listEntry.add(type);
-                          } else {
-                            listEntry.remove(type);
-                          }
-                        });
-                      },
+                      onCheckboxChanged: _onCheckboxChanged,
+                      selectedEntries:
+                          selectedEntries, // Pass the list of selected entries
                     ),
                   ),
                   Visibility(
@@ -565,15 +606,9 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                     child: SessionsVisibility(
                       isVisible:
                           widget.userType == "3" || widget.userType == "2",
-                      onCheckboxChanged: (value, type) {
-                        setState(() {
-                          if (value) {
-                            listSessions.add(type);
-                          } else {
-                            listSessions.remove(type);
-                          }
-                        });
-                      },
+                      onCheckboxChanged: _onSessionCheckboxChanged,
+                      selectedSessions:
+                          selectedSessions, // Pass the selected sessions list
                     ),
                   ),
                   40.kH,
@@ -592,15 +627,9 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                     child: AdditionalsRestaurantCoffee(
                       isVisible:
                           widget.userType == "3" || widget.userType == "2",
-                      onCheckboxChanged: (value, type) {
-                        setState(() {
-                          if (value) {
-                            additionals.add(type);
-                          } else {
-                            additionals.remove(type);
-                          }
-                        });
-                      },
+                      onCheckboxChanged: _onAdditionalCheckboxChanged,
+                      selectedAdditionals:
+                          selectedAdditionals, // Pass the selected additionals list
                     ),
                   ),
                   40.kH,
@@ -1061,12 +1090,12 @@ class _AddEstatesScreenState extends State<AddEstatesScreen> {
                               typeAccount: typeAccount ?? "",
                               taxNumber: taxNumberController.text,
                               music: music,
-                              listTypeOfRestaurant: listTypeOfRestaurant,
-                              listSessions: listSessions,
+                              listTypeOfRestaurant: selectedRestaurantTypes,
+                              listSessions: selectedSessions,
                               roomAllowance: roomAllowance,
-                              additionals: additionals,
+                              additionals: selectedAdditionals,
                               listMusic: listMusic,
-                              listEntry: listEntry,
+                              listEntry: selectedEntries,
                               price: singleController.text.isNotEmpty
                                   ? singleController.text
                                   : "150",

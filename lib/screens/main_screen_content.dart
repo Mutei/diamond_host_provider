@@ -1,6 +1,7 @@
 import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
 import 'package:daimond_host_provider/localization/language_constants.dart';
+import 'package:daimond_host_provider/animations_widgets/build_shimmer_loader.dart';
 import 'package:daimond_host_provider/widgets/reused_appbar.dart';
 import 'package:daimond_host_provider/widgets/estate_card_widget.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -8,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../animations_widgets/build_shimmer_estate_card.dart';
 import '../backend/customer_rate_services.dart';
 import '../backend/estate_services.dart';
 import '../backend/adding_estate_services.dart'; // Import the service
@@ -356,10 +358,7 @@ class _MainScreenContentState extends State<MainScreenContent>
       ),
       drawer: const CustomDrawer(),
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-              color: kPurpleColor,
-            ))
+          ? const Center(child: ShimmerEstateCard())
           : estates.isEmpty
               ? Center(
                   child: Text(
