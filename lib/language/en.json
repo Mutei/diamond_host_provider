@@ -471,5 +471,11 @@
   "Hotel Entry": "Hotel Entry",
   "Entry": "Entry",
   "Show less":"Show less",
-  "Show more":"Show more"
+  "Show more":"Show more",
+  "You have not added any hotels yet": "You have not added any hotels yet",
+  "My Hotels": "My Hotels",
+  "You have not added any restaurants yet": "You have not added any restaurants yet",
+  "My Restaurants": "My Restaurants",
+  "You have not added any coffees yet": "You have not added any coffees yet",
+  "My Coffees": "My Coffees"
 }

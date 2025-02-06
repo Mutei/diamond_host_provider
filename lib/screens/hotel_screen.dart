@@ -1,10 +1,7 @@
 import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
-import 'package:daimond_host_provider/extension/sized_box_extension.dart';
 import 'package:daimond_host_provider/localization/language_constants.dart';
 import 'package:daimond_host_provider/animations_widgets/build_shimmer_loader.dart';
-import 'package:daimond_host_provider/screens/coffee_screen.dart';
-import 'package:daimond_host_provider/screens/restaurant_screen.dart';
 import 'package:daimond_host_provider/widgets/reused_appbar.dart';
 import 'package:daimond_host_provider/widgets/estate_card_widget.dart';
 import 'package:firebase_database/firebase_database.dart';
@@ -16,22 +13,19 @@ import '../animations_widgets/build_shimmer_estate_card.dart';
 import '../backend/customer_rate_services.dart';
 import '../backend/estate_services.dart';
 import '../backend/adding_estate_services.dart'; // Import the service
-import '../widgets/custom_category_button.dart';
 import '../widgets/custom_drawer.dart';
 import '../widgets/search_text_form_field.dart';
-import 'hotel_screen.dart';
 import 'profile_estate_screen.dart';
 import 'maps_screen.dart'; // Import MapsScreen
 
-class MainScreenContent extends StatefulWidget {
-  const MainScreenContent({super.key});
+class HotelScreen extends StatefulWidget {
+  const HotelScreen({super.key});
 
   @override
-  _MainScreenContentState createState() => _MainScreenContentState();
+  _HotelScreenState createState() => _HotelScreenState();
 }
 
-class _MainScreenContentState extends State<MainScreenContent>
-    with WidgetsBindingObserver {
+class _HotelScreenState extends State<HotelScreen> with WidgetsBindingObserver {
   final EstateServices estateServices = EstateServices();
   final CustomerRateServices customerRateServices = CustomerRateServices();
   final AddEstateServices backendService =
@@ -200,7 +194,7 @@ class _MainScreenContentState extends State<MainScreenContent>
     final estateList = <Map<String, dynamic>>[];
     data.forEach((type, estatesByType) {
       estatesByType.forEach((estateID, estateData) {
-        if (estateData['IsAccepted'] == "2") {
+        if (estateData['IsAccepted'] == "2" && estateData['Type'] == "1") {
           estateList.add({
             'id': estateID,
             'nameEn': estateData['NameEn'] ?? 'Unknown',
@@ -374,16 +368,14 @@ class _MainScreenContentState extends State<MainScreenContent>
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: ReusedAppBar(
-        title: getTranslated(context, "Main Screen"),
+        title: getTranslated(context, "My Hotels"),
       ),
-      drawer: const CustomDrawer(),
       body: isLoading
           ? const Center(child: ShimmerEstateCard())
           : estates.isEmpty
               ? Center(
                   child: Text(
-                    getTranslated(
-                        context, "You have not added any estates yet."),
+                    getTranslated(context, "You have not added any hotels yet"),
                     style: kSecondaryStyle,
                   ),
                 )
@@ -395,22 +387,22 @@ class _MainScreenContentState extends State<MainScreenContent>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Display greeting with the user's first name
-                        Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Row(
-                            children: [
-                              Text(
-                                "${_getGreeting()}, ",
-                                style: kPrimaryStyle.copyWith(fontSize: 22),
-                              ),
-                              Text(firstName,
-                                  style: TextStyle(
-                                      fontSize: 22,
-                                      color: Colors.orange,
-                                      fontWeight: FontWeight.bold)),
-                            ],
-                          ),
-                        ),
+                        // Padding(
+                        //   padding: const EdgeInsets.all(16.0),
+                        //   child: Row(
+                        //     children: [
+                        //       Text(
+                        //         "${_getGreeting()}, ",
+                        //         style: kPrimaryStyle.copyWith(fontSize: 22),
+                        //       ),
+                        //       Text(firstName,
+                        //           style: TextStyle(
+                        //               fontSize: 22,
+                        //               color: Colors.orange,
+                        //               fontWeight: FontWeight.bold)),
+                        //     ],
+                        //   ),
+                        // ),
                         // Search Text Field
                         Padding(
                           padding: const EdgeInsets.all(16.0),
@@ -420,60 +412,28 @@ class _MainScreenContentState extends State<MainScreenContent>
                             onChanged: (value) => _filterEstates(),
                           ),
                         ),
-                        10.kH,
                         // Category Buttons (Hotel, Cafe, Restaurant)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 22.0),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Hotel"),
-                                  icon: Icons.hotel,
-                                  backgroundColor: Colors.blueAccent,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const HotelScreen()),
-                                    );
-                                  },
-                                ),
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Coffee"),
-                                  icon: Icons
-                                      .coffee, // You might need to add the font package if not available by default
-                                  backgroundColor: Colors.brown,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CoffeeScreen()),
-                                    );
-                                  },
-                                ),
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Restaurant"),
-                                  icon: Icons.restaurant,
-                                  backgroundColor: Colors.deepOrange,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RestaurantScreen()),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        15.kH,
+                        // Padding(
+                        //   padding: const EdgeInsets.all(16.0),
+                        //   child: Row(
+                        //     mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        //     children: [
+                        //       ElevatedButton(
+                        //         onPressed: () => _filterByCategory("1"),
+                        //         child: Text(getTranslated(context, "Hotel")),
+                        //       ),
+                        //       ElevatedButton(
+                        //         onPressed: () => _filterByCategory("2"),
+                        //         child: Text(getTranslated(context, "Coffee")),
+                        //       ),
+                        //       ElevatedButton(
+                        //         onPressed: () => _filterByCategory("3"),
+                        //         child:
+                        //             Text(getTranslated(context, "Restaurant")),
+                        //       ),
+                        //     ],
+                        //   ),
+                        // ),
                         // Display filtered or all estates
                         Padding(
                           padding: const EdgeInsets.symmetric(
@@ -481,7 +441,7 @@ class _MainScreenContentState extends State<MainScreenContent>
                           child: Text(
                             searchActive
                                 ? getTranslated(context, "Search Results")
-                                : getTranslated(context, "My Estates"),
+                                : getTranslated(context, "My Hotels"),
                             style: kPrimaryStyle.copyWith(fontSize: 22),
                           ),
                         ),

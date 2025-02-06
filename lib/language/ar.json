@@ -472,7 +472,12 @@
   "Hotel Entry": "دخول الفندق",
   "Entry": "دخول",
   "Show less": "إظهار أقل",
-  "Show more": "إظهار المزيد"
-
+  "Show more": "إظهار المزيد",
+  "You have not added any hotels yet": "لم تقم بإضافة أي فنادق بعد",
+  "My Hotels": "فنادقي",
+  "You have not added any restaurants yet": "لم تقم بإضافة أي مطاعم بعد",
+  "My Restaurants": "مطاعمي",
+  "You have not added any coffees yet": "لم تقم بإضافة أي مقاهي بعد",
+  "My Coffees": "مقاهيّ"
 
 }
