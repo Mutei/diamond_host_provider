@@ -16,25 +16,39 @@ import '../state_management/general_provider.dart';
 import '../utils/global_methods.dart';
 import 'item_drawer.dart';
 import 'package:badges/badges.dart' as badges;
-import 'package:firebase_database/firebase_database.dart'; // For Firebase interaction
+import 'package:firebase_database/firebase_database.dart';
+import '../animations_widgets/build_shimmer_custom_drawer.dart'; // Import the shimmer widget
 
 class CustomDrawer extends StatefulWidget {
   const CustomDrawer({super.key});
 
   @override
-  State<CustomDrawer> createState() => _CustomDrawerState();
+  _CustomDrawerState createState() => _CustomDrawerState();
 }
 
 class _CustomDrawerState extends State<CustomDrawer> {
+  bool? canAdd; // Store the result of canAddEstate()
+
+  @override
+  void initState() {
+    super.initState();
+    checkEstateStatus();
+  }
+
+  Future<void> checkEstateStatus() async {
+    bool result = await canAddEstate();
+    setState(() {
+      canAdd = result;
+    });
+  }
+
   Future<bool> canAddEstate() async {
-    final user =
-        FirebaseAuth.instance.currentUser; // Get the authenticated user
-    if (user == null) return true; // If user is null, allow adding an estate
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return true;
 
     String userId = user.uid;
-    print("My user id is: $userId"); // Print the Firebase user ID
+    print("My user ID is: $userId");
 
-    // List of estate categories to check
     List<String> estateCategories = ["Coffee", "Hottel", "Restaurant"];
 
     try {
@@ -60,7 +74,7 @@ class _CustomDrawerState extends State<CustomDrawer> {
                   estateData['IsAccepted'] == '2') {
                 print(
                     "Estate is accepted or under process. Cannot add another estate.");
-                return false; // Estate is under process or accepted, cannot add another one
+                return false;
               }
             }
           }
@@ -70,7 +84,27 @@ class _CustomDrawerState extends State<CustomDrawer> {
       print("Error fetching estate data: $e");
     }
 
-    return true; // User can add an estate if no estate is found or all estates are rejected
+    return true;
+  }
+
+  Widget _buildShimmerOrItem({
+    required bool isLoading,
+    required IconData icon,
+    required String text,
+    required String hint,
+    required VoidCallback onTap,
+  }) {
+    if (isLoading) {
+      return CustomDrawerShimmerLoading(
+        icon: Icons.settings,
+      );
+    }
+    return DrawerItem(
+      icon: Icon(icon, color: kDeepPurpleColor),
+      text: text,
+      hint: hint,
+      onTap: onTap,
+    );
   }
 
   @override
@@ -106,118 +140,107 @@ class _CustomDrawerState extends State<CustomDrawer> {
               ),
             ),
 
-            DrawerItem(
+            // ✅ Shimmer Loading for all drawer items
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.person,
               text: getTranslated(context, "User's Profile"),
-              icon: Icon(Icons.person, color: kDeepPurpleColor),
+              hint: getTranslated(context, "You can view your data here"),
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const ProfileScreenUser()));
               },
-              hint: getTranslated(context, "You can view your data here"),
             ),
 
-            // Conditionally show "Add an Estate" button based on user estate status
-            FutureBuilder<bool>(
-              future: canAddEstate(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Container(); // Show nothing while checking
-                }
+            // ✅ Condition applies only to "Add an Estate"
+            if (canAdd == null)
+              const CustomDrawerShimmerLoading(
+                icon: Icons.add,
+              )
+            else if (canAdd == true)
+              DrawerItem(
+                icon: Icon(Icons.add, color: kDeepPurpleColor),
+                onTap: () {
+                  Navigator.of(context).push(MaterialPageRoute(
+                      builder: (context) =>
+                          TypeEstate(Check: "Add an Estate")));
+                },
+                hint:
+                    getTranslated(context, "From here you can add an estate."),
+                text: getTranslated(context, "Add an Estate"),
+              ),
 
-                if (snapshot.hasData && snapshot.data == true) {
-                  return DrawerItem(
-                    icon: Icon(Icons.add, color: kDeepPurpleColor),
-                    onTap: () {
-                      Navigator.of(context).push(MaterialPageRoute(
-                          builder: (context) =>
-                              TypeEstate(Check: "Add an Estate")));
-                    },
-                    hint: getTranslated(
-                        context, "From here you can add an estate."),
-                    text: getTranslated(context, "Add an Estate"),
-                  );
-                }
-
-                return Container(); // Hide button if estate exists & is accepted/under process
-              },
-            ),
-
-            DrawerItem(
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Bootstrap.file_text,
               text: getTranslated(context, "Posts"),
-              icon: Icon(Bootstrap.file_text, color: kDeepPurpleColor),
+              hint: getTranslated(context, "Show the Post"),
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => const AllPostsScreen()));
               },
-              hint: getTranslated(context, "Show the Post"),
             ),
-            DrawerItem(
+
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.notification_add,
               text: getTranslated(context, "Notification"),
-              icon: Icon(Icons.notification_add, color: kDeepPurpleColor),
+              hint: getTranslated(context,
+                  "You can see the notifications that come to you, such as booking confirmation"),
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => ProviderNotificationScreen()));
               },
-              hint: getTranslated(context,
-                  "You can see the notifications that come to you, such as booking confirmation"),
             ),
             Consumer<GeneralProvider>(
               builder: (context, provider, child) {
-                return DrawerItem(
+                return _buildShimmerOrItem(
+                  isLoading: canAdd == null,
+                  icon: Bootstrap.book,
                   text: getTranslated(context, "Request"),
-                  icon: Icon(Bootstrap.book, color: kDeepPurpleColor),
+                  hint: getTranslated(
+                      context, "Receive booking requests from here"),
                   onTap: () {
                     Navigator.of(context).push(MaterialPageRoute(
                         builder: (context) => RequestScreen()));
                   },
-                  hint: getTranslated(
-                      context, "Receive booking requests from here"),
-                  badge: provider.newRequestCount == 0
-                      ? null
-                      : badges.Badge(
-                          badgeContent: Text(
-                            provider.newRequestCount.toString(),
-                            style: const TextStyle(color: Colors.white),
-                          ),
-                          child: Icon(
-                            Bootstrap.book,
-                            color: kDeepPurpleColor,
-                          ),
-                        ),
                 );
               },
             ),
-            DrawerItem(
+
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.update,
               text: getTranslated(context, "Upgrade account"),
-              icon: Icon(
-                Icons.update,
-                color: kDeepPurpleColor,
-              ),
+              hint: getTranslated(
+                  context, "From here you can upgrade account to Vip"),
               onTap: () {
                 Navigator.of(context).push(MaterialPageRoute(
                     builder: (context) => UpgradeAccountScreen()));
               },
-              hint: getTranslated(
-                  context, "From here you can upgrade account to Vip"),
             ),
-            DrawerItem(
+
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.settings,
               text: getTranslated(context, "Theme Settings"),
-              icon: Icon(Icons.settings, color: kDeepPurpleColor),
+              hint: '',
               onTap: () {
                 Navigator.of(context).push(
                     MaterialPageRoute(builder: (context) => SettingsScreen()));
               },
-              hint: '',
             ),
-            DrawerItem(
+
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.logout,
               text: getTranslated(context, "Logout"),
-              icon: Icon(Icons.logout, color: kDeepPurpleColor),
+              hint: '',
               onTap: () {
                 showLogoutConfirmationDialog(context, () async {
                   await LogOutMethod().logOut(context);
                 });
               },
-              hint: '',
             ),
           ],
         ),
