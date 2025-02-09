@@ -281,75 +281,76 @@ class SettingsScreen extends StatelessWidget {
                 activeColor: kPurpleColor,
               ),
             ),
-            const Divider(),
-
-            // Theme Settings Section
-            Padding(
-              padding:
-                  const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
-              child: Text(
-                getTranslated(context, "Theme Settings"),
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: kPurpleColor,
-                ),
-              ),
-            ),
-            ListTile(
-              title: Text(
-                getTranslated(context, "System Mode"),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: kPurpleColor,
-                ),
-              ),
-              trailing: Radio<ThemeModeType>(
-                value: ThemeModeType.system,
-                groupValue: provider.themeMode,
-                onChanged: (value) {
-                  provider.toggleTheme(ThemeModeType.system);
-                },
-                activeColor: kPurpleColor,
-              ),
-            ),
-            ListTile(
-              title: Text(
-                getTranslated(context, "Light Mode"),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: kPurpleColor,
-                ),
-              ),
-              trailing: Radio<ThemeModeType>(
-                value: ThemeModeType.light,
-                groupValue: provider.themeMode,
-                onChanged: (value) {
-                  provider.toggleTheme(ThemeModeType.light);
-                },
-                activeColor: kPurpleColor,
-              ),
-            ),
-            ListTile(
-              title: Text(
-                getTranslated(context, "Dark Mode"),
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: kPurpleColor,
-                ),
-              ),
-              trailing: Radio<ThemeModeType>(
-                value: ThemeModeType.dark,
-                groupValue: provider.themeMode,
-                onChanged: (value) {
-                  provider.toggleTheme(ThemeModeType.dark);
-                },
-                activeColor: kPurpleColor,
-              ),
-            ),
+            // const Divider(),
+            //
+            // // Theme Settings Section
+            // Padding(
+            //   padding:
+            //       const EdgeInsets.symmetric(vertical: 10.0, horizontal: 16.0),
+            //   child: Text(
+            //     getTranslated(context, "Theme Settings"),
+            //     style: const TextStyle(
+            //       fontSize: 18,
+            //       fontWeight: FontWeight.bold,
+            //       color: kPurpleColor,
+            //     ),
+            //   ),
+            // ),
+            //
+            // ListTile(
+            //   title: Text(
+            //     getTranslated(context, "Light Mode"),
+            //     style: const TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.w500,
+            //       color: kPurpleColor,
+            //     ),
+            //   ),
+            //   trailing: Radio<ThemeModeType>(
+            //     value: ThemeModeType.light,
+            //     groupValue: provider.themeMode,
+            //     onChanged: (value) {
+            //       provider.toggleTheme(ThemeModeType.light);
+            //     },
+            //     activeColor: kPurpleColor,
+            //   ),
+            // ),
+            // ListTile(
+            //   title: Text(
+            //     getTranslated(context, "Dark Mode"),
+            //     style: const TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.w500,
+            //       color: kPurpleColor,
+            //     ),
+            //   ),
+            //   trailing: Radio<ThemeModeType>(
+            //     value: ThemeModeType.dark,
+            //     groupValue: provider.themeMode,
+            //     onChanged: (value) {
+            //       provider.toggleTheme(ThemeModeType.dark);
+            //     },
+            //     activeColor: kPurpleColor,
+            //   ),
+            // ),
+            // ListTile(
+            //   title: Text(
+            //     getTranslated(context, "System Mode"),
+            //     style: const TextStyle(
+            //       fontSize: 16,
+            //       fontWeight: FontWeight.w500,
+            //       color: kPurpleColor,
+            //     ),
+            //   ),
+            //   trailing: Radio<ThemeModeType>(
+            //     value: ThemeModeType.system,
+            //     groupValue: provider.themeMode,
+            //     onChanged: (value) {
+            //       provider.toggleTheme(ThemeModeType.system);
+            //     },
+            //     activeColor: kPurpleColor,
+            //   ),
+            // ),
             const Divider(),
 
             // Call Center Section

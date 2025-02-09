@@ -83,7 +83,9 @@ class GeneralProvider with ChangeNotifier, DiagnosticableTreeMixin {
 
   void loadThemePreference() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    _themeMode = ThemeModeType.values[prefs.getInt('themeMode') ?? 0];
+    // If no theme is saved, default to light
+    _themeMode = ThemeModeType
+        .values[prefs.getInt('themeMode') ?? ThemeModeType.light.index];
     notifyListeners();
   }
 
