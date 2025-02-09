@@ -1040,7 +1040,9 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                     ),
                     const SizedBox(height: 8),
                     _feedbackList.isEmpty
-                        ? const Center(child: Text("No feedback available."))
+                        ? Center(
+                            child: Text(getTranslated(
+                                context, "No feedback available.")))
                         : SizedBox(
                             height: 300,
                             child: ListView.separated(
