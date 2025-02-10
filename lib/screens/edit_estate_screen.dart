@@ -1579,7 +1579,7 @@ class _EditEstateState extends State<EditEstate> {
       "City": cityValue,
       "State": stateValue,
       "Type": type,
-      "IDUser": sharedPreferences.getString("userId") ?? "No Id",
+      "IDUser": FirebaseAuth.instance.currentUser?.uid ?? "No Id",
       "IDEstate": widget.objEstate['IDEstate'],
       "TypeAccount": TypeAccount,
       "Music": musicValue, // Correctly assign Music

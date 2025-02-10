@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../screens/login_screen.dart';
 
 class LogOutMethod {
@@ -8,23 +9,31 @@ class LogOutMethod {
 
   Future<void> logOut(BuildContext context) async {
     try {
-      // Show a loading indicator if needed
+      // Show a loading indicator
       showDialog(
         context: context,
         barrierDismissible: false,
         builder: (BuildContext context) {
-          return Center(child: CircularProgressIndicator());
+          return const Center(child: CircularProgressIndicator());
         },
       );
 
-      // Remove the Token from Firebase Realtime Database
+      // Get current user ID before logging out
       final userId = FirebaseAuth.instance.currentUser?.uid;
+
       if (userId != null) {
         await _database.child('App/User/$userId/Token').remove();
       }
 
+      // Clear SharedPreferences and force a new instance
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove(
+          "userId"); // Clears all stored data including userId// Clear all stored data
+      await prefs.reload(); // Ensure SharedPreferences is refreshed
+
       // Sign out the user
       await FirebaseAuth.instance.signOut();
+      print("User logged out: $userId");
 
       // Close the loading indicator
       Navigator.of(context).pop();
@@ -36,8 +45,8 @@ class LogOutMethod {
         ),
       );
     } catch (e) {
-      // Handle logout error, close the loading dialog, and show error message
-      Navigator.of(context).pop(); // Close the loading indicator if any error
+      // Handle logout error
+      Navigator.of(context).pop(); // Close the loading indicator
       print('Error logging out: $e');
     }
   }
