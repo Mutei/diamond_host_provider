@@ -23,6 +23,7 @@ import 'package:daimond_host_provider/widgets/edit_valet_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:csc_picker/csc_picker.dart';
@@ -319,6 +320,18 @@ class _EditEstateState extends State<EditEstate> {
   }
 
   /// Save updated images to Firebase
+  Future<File> compressImage(File image) async {
+    final result = await FlutterImageCompress.compressWithFile(
+      image.path,
+      minWidth: 800, // Adjust the width as per your requirement
+      minHeight: 600, // Adjust the height as per your requirement
+      quality: 80, // Compress quality (0 to 100)
+    );
+
+    final compressedFile = File(image.path)..writeAsBytesSync(result!);
+    return compressedFile;
+  }
+
   Future<void> saveUpdatedImages() async {
     try {
       List<String> existingImages = await fetchExistingImages();
@@ -326,31 +339,30 @@ class _EditEstateState extends State<EditEstate> {
           ? (int.tryParse(existingImages.last.split('.').first) ?? -1) + 1
           : 0;
 
+      // Create a list of futures for concurrent uploads
+      List<Future<String>> uploadFutures = [];
+
       for (var image in newImageFiles) {
+        File compressedImage =
+            await compressImage(File(image.path)); // Compress the image
         String newFileName = "$nextIndex.jpg"; // Generate new name
         final ref = FirebaseStorage.instance
             .ref()
             .child("${widget.estateId}/$newFileName");
-        await ref.putFile(File(image.path));
 
-        // // Get download URL and store it in the database
-        // String imageUrl = await ref.getDownloadURL();
-        // String estate = "Coffee";
-        // if (widget.estateType == "1") {
-        //   estate = "Hottel";
-        // } else if (widget.estateType == "2") {
-        //   estate = "Coffee";
-        // } else {
-        //   estate = "Restaurant";
-        // }
-        // await FirebaseDatabase.instance
-        //     .ref("App/Estate/$estate/${widget.estateId}/EstateImages")
-        //     .push()
-        //     .set(imageUrl);
+        // Add the upload task to the futures list
+        uploadFutures.add(ref.putFile(compressedImage).then((snapshot) {
+          return snapshot.ref
+              .getDownloadURL(); // Return download URL after upload
+        }));
 
         nextIndex++; // Increment index for the next image
       }
 
+      // Wait for all uploads to finish
+      List<String> uploadedUrls = await Future.wait(uploadFutures);
+
+      // Update UI with the new images URLs
       setState(() {
         newImageFiles.clear();
       });
