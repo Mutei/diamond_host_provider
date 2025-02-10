@@ -29,11 +29,13 @@ import 'package:flutter/material.dart';
 import 'package:csc_picker/csc_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:sizer/sizer.dart';
 
 import '../localization/language_constants.dart';
 import '../state_management/general_provider.dart';
 import '../utils/failure_dialogue.dart';
+import '../utils/global_methods.dart';
 import '../utils/rooms.dart';
 import '../utils/success_dialogue.dart';
 import '../widgets/birthday_textform_field.dart';
@@ -334,6 +336,9 @@ class _EditEstateState extends State<EditEstate> {
 
   Future<void> saveUpdatedImages() async {
     try {
+      // Show the custom loading dialog before the upload starts
+      showCustomLoadingDialog(context);
+
       List<String> existingImages = await fetchExistingImages();
       int nextIndex = existingImages.isNotEmpty
           ? (int.tryParse(existingImages.last.split('.').first) ?? -1) + 1
@@ -367,6 +372,9 @@ class _EditEstateState extends State<EditEstate> {
         newImageFiles.clear();
       });
 
+      // Dismiss the loading dialog once the upload is complete
+      Navigator.pop(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content:
@@ -374,6 +382,10 @@ class _EditEstateState extends State<EditEstate> {
       );
     } catch (e) {
       print("Error saving images: $e");
+
+      // Dismiss the loading dialog in case of error
+      Navigator.pop(context);
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
             content: Text(getTranslated(context, "Failed to update images"))),
@@ -533,6 +545,7 @@ class _EditEstateState extends State<EditEstate> {
   Widget build(BuildContext context) {
     // Determine estate type
     String estateType = widget.objEstate['Type'] ?? "1"; // Default to "1"
+    bool isLoading = existingImageUrls.isEmpty;
 
     return Scaffold(
       // appBar: AppBar(
@@ -559,7 +572,34 @@ class _EditEstateState extends State<EditEstate> {
                   SizedBox(height: 25),
                   TextHeader(getTranslated(context, "Edit Estate Images")),
                   const SizedBox(height: 10),
+                  // Button to Pick New Images
 
+                  Align(
+                    alignment: Alignment.center,
+                    child: Row(
+                      children: [
+                        IconButton(
+                          onPressed: pickImages,
+                          icon: const Icon(
+                            Icons
+                                .add_a_photo, // You can use a gallery or camera icon
+                            color:
+                                kPurpleColor, // You can change this to any color that matches your design
+                            size: 28, // Adjust the size as needed
+                          ),
+                          tooltip: getTranslated(context,
+                              "Add New Images"), // Optional: tooltip for accessibility
+                          splashColor: kPurpleColor
+                              .withOpacity(0.2), // Optional: splash effect
+                          highlightColor: kPurpleColor
+                              .withOpacity(0.2), // Optional: highlight effect
+                        ),
+                        TextHeader("Add New Images"),
+                      ],
+                    ),
+                  ),
+
+                  // Display Existing Images
                   // Display Existing Images
                   if (existingImageUrls.isNotEmpty)
                     SizedBox(
@@ -606,16 +646,42 @@ class _EditEstateState extends State<EditEstate> {
                     Container(
                       alignment: Alignment.center,
                       padding: const EdgeInsets.all(16),
-                      child: Text(getTranslated(context, "No images found.")),
+                      child: Shimmer.fromColors(
+                        baseColor: Colors.grey[300]!,
+                        highlightColor: Colors.grey[100]!,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            // Shimmering Cloud Animation (Looks like an image loading)
+                            Icon(
+                              Icons.image,
+                              color:
+                                  kPurpleColor, // Use your preferred color here
+                              size: 80, // Adjust size as needed
+                            ),
+                            const SizedBox(height: 20),
+                            // Text that can be customized
+                            Text(
+                              getTranslated(context, "Loading images..."),
+                              style: TextStyle(
+                                  fontSize: 16, color: Colors.grey[600]),
+                            ),
+                            const SizedBox(height: 20),
+                            // Optional: More text for engaging message
+                            Text(
+                              getTranslated(context,
+                                  "Please wait while we fetch your images"),
+                              style: TextStyle(
+                                  fontSize: 14, color: Colors.grey[500]),
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
 
                   // Button to Pick New Images
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: pickImages,
-                    child: Text(getTranslated(context, "Add New Images")),
-                  ),
-
+                  // Button to Pick New Images
+                  10.kH,
                   // Display Selected New Images
                   if (newImageFiles.isNotEmpty)
                     SizedBox(
@@ -663,11 +729,11 @@ class _EditEstateState extends State<EditEstate> {
                     ),
 
                   // Save Changes Button
-                  const SizedBox(height: 10),
-                  ElevatedButton(
-                    onPressed: saveUpdatedImages,
-                    child: Text(getTranslated(context, "Save Images")),
-                  ),
+                  // const SizedBox(height: 10),
+                  // ElevatedButton(
+                  //   onPressed: saveUpdatedImages,
+                  //   child: Text(getTranslated(context, "Save Images")),
+                  // ),
                   TextHeader("Information in Arabic"),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -1471,15 +1537,23 @@ class _EditEstateState extends State<EditEstate> {
                         changesMade = true;
                       }
 
+                      // Check if new images were added
+                      if (newImageFiles.isNotEmpty) {
+                        changesMade =
+                            true; // Mark as changes made if new images are added
+                      }
+
                       // Add additional comparisons for room details if needed
-                      // For example:
-                      // if (singleController.text != originalSinglePrice || ...)
-                      //    changesMade = true;
 
                       // Step 2: Show appropriate dialog based on changes
                       if (changesMade) {
                         // If changes detected, update the estate
                         await Update();
+
+                        // Upload new images if any are selected
+                        if (newImageFiles.isNotEmpty) {
+                          await saveUpdatedImages(); // Upload the new images
+                        }
 
                         // Show success dialog
                         await showDialog(
@@ -1495,7 +1569,6 @@ class _EditEstateState extends State<EditEstate> {
 
                         // Navigate based on estate type after success
                         if (estateType == "1") {
-                          // Navigate to AdditionalFacility screen for estate type 1
                           Navigator.of(context).push(MaterialPageRoute(
                             builder: (context) => AdditionalFacility(
                               CheckState: "Edit",
@@ -1505,11 +1578,9 @@ class _EditEstateState extends State<EditEstate> {
                             ),
                           ));
                         } else if (estateType == "2") {
-                          // For estate type 2, adjust navigation as needed.
                           Navigator.of(context)
                               .popUntil((route) => route.isFirst);
                         } else if (estateType == "3") {
-                          // For estate type 3, adjust navigation as needed.
                           Navigator.of(context)
                               .popUntil((route) => route.isFirst);
                         }
@@ -1527,23 +1598,8 @@ class _EditEstateState extends State<EditEstate> {
                         );
                       }
                     },
-
-                    // onTap: () async {
-                    //   await Update();
-                    //   if (estateType == "1") {
-                    //     Navigator.of(context).push(MaterialPageRoute(
-                    //         builder: (context) => AdditionalFacility(
-                    //               CheckState: "Edit",
-                    //               CheckIsBooking: false,
-                    //               estate: const {},
-                    //               IDEstate:
-                    //                   widget.objEstate['IDEstate'].toString(),
-                    //             )));
-                    //   }
-                    //   // Similarly, handle navigation for other types if needed
-                    // },
                   ),
-                ),
+                )
               ],
             ),
           ),

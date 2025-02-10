@@ -485,5 +485,8 @@
   "Add New Images": "إضافة صور جديدة",
   "Save Images": "حفظ الصور",
   "Images updated successfully": "تم تحديث الصور بنجاح",
-  "Failed to update images": "فشل في تحديث الصور"
+  "Failed to update images": "فشل في تحديث الصور",
+  "Loading images...": "جارٍ تحميل الصور...",
+  "Please wait while we fetch your images": "يرجى الانتظار أثناء جلب الصور"
+
 }
