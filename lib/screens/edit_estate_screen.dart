@@ -2,6 +2,9 @@
 
 // ignore_for_file: non_constant_identifier_names
 
+import 'dart:io';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:daimond_host_provider/widgets/edit_barber.dart';
 import 'package:daimond_host_provider/widgets/edit_coffee_music_services.dart';
 import 'package:daimond_host_provider/widgets/edit_gym.dart';
@@ -19,6 +22,7 @@ import 'package:daimond_host_provider/widgets/edit_swimming_pool.dart';
 import 'package:daimond_host_provider/widgets/edit_valet_options.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:csc_picker/csc_picker.dart';
@@ -41,8 +45,15 @@ import 'main_screen_content.dart';
 class EditEstate extends StatefulWidget {
   final Map objEstate;
   final List<Rooms> LstRooms;
+  final String estateId;
+  final String estateType;
 
-  EditEstate({required this.objEstate, required this.LstRooms, Key? key})
+  EditEstate(
+      {required this.objEstate,
+      required this.LstRooms,
+      required this.estateId,
+      required this.estateType,
+      Key? key})
       : super(key: key);
 
   @override
@@ -52,6 +63,10 @@ class EditEstate extends StatefulWidget {
 class _EditEstateState extends State<EditEstate> {
   final ImagePicker imgpicker = ImagePicker();
   List<XFile>? imagefiles;
+  List<XFile> newImageFiles = [];
+  List<String> existingImageUrls = [];
+  final ImagePicker imgPicker = ImagePicker();
+  final FirebaseStorage storage = FirebaseStorage.instance;
 
   // Text Controllers for Arabic and English information
   final TextEditingController arNameController = TextEditingController();
@@ -122,6 +137,7 @@ class _EditEstateState extends State<EditEstate> {
   void initState() {
     super.initState();
     // Initialize controllers with existing data
+    _fetchEstateImages();
     arNameController.text = widget.objEstate["NameAr"] ?? '';
     arBioController.text = widget.objEstate["BioAr"] ?? '';
     enNameController.text = widget.objEstate["NameEn"] ?? '';
@@ -205,6 +221,151 @@ class _EditEstateState extends State<EditEstate> {
           // Handle unknown room types if necessary
           break;
       }
+    }
+  }
+
+  Future<void> _fetchEstateImages() async {
+    try {
+      ListResult result = await storage.ref("${widget.estateId}").listAll();
+      List<String> urls = [];
+
+      for (var item in result.items) {
+        String url = await item.getDownloadURL();
+        urls.add(url);
+      }
+
+      setState(() {
+        existingImageUrls = urls;
+      });
+    } catch (e) {
+      print("Error fetching images: $e");
+    }
+  }
+
+  /// Pick new images
+  Future<void> pickImages() async {
+    try {
+      final pickedFiles = await imgPicker.pickMultiImage();
+      if (pickedFiles != null) {
+        setState(() {
+          newImageFiles.addAll(pickedFiles);
+        });
+      }
+    } catch (e) {
+      print("Error picking images: $e");
+    }
+  }
+
+  /// Remove existing image from Firebase Storage
+  Future<void> removeImage(String imageUrl) async {
+    try {
+      Reference ref = storage.refFromURL(imageUrl);
+      await ref.delete();
+
+      setState(() {
+        existingImageUrls.remove(imageUrl);
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Image removed successfully")),
+      );
+    } catch (e) {
+      print("Error removing image: $e");
+    }
+  }
+
+  /// Upload new images to Firebase
+  Future<List<String>> uploadNewImages() async {
+    List<String> uploadedUrls = [];
+
+    for (var image in newImageFiles) {
+      try {
+        Reference ref = storage.ref(
+            "${widget.estateId}/${DateTime.now().millisecondsSinceEpoch}.jpg");
+        UploadTask uploadTask = ref.putFile(File(image.path));
+        TaskSnapshot snapshot = await uploadTask;
+        String downloadUrl = await snapshot.ref.getDownloadURL();
+        uploadedUrls.add(downloadUrl);
+      } catch (e) {
+        print("Error uploading image: $e");
+      }
+    }
+    return uploadedUrls;
+  }
+
+  Future<List<String>> fetchExistingImages() async {
+    List<String> existingImages = [];
+    try {
+      final storageRef = FirebaseStorage.instance.ref().child(widget.estateId);
+      final ListResult result = await storageRef.listAll();
+
+      for (var item in result.items) {
+        existingImages.add(item.name);
+      }
+
+      // Sort the images numerically
+      existingImages.sort((a, b) {
+        int numA = int.tryParse(a.split('.').first) ?? 0;
+        int numB = int.tryParse(b.split('.').first) ?? 0;
+        return numA.compareTo(numB);
+      });
+
+      print("Existing images in storage: $existingImages");
+      return existingImages;
+    } catch (e) {
+      print("Error fetching images: $e");
+      return [];
+    }
+  }
+
+  /// Save updated images to Firebase
+  Future<void> saveUpdatedImages() async {
+    try {
+      List<String> existingImages = await fetchExistingImages();
+      int nextIndex = existingImages.isNotEmpty
+          ? (int.tryParse(existingImages.last.split('.').first) ?? -1) + 1
+          : 0;
+
+      for (var image in newImageFiles) {
+        String newFileName = "$nextIndex.jpg"; // Generate new name
+        final ref = FirebaseStorage.instance
+            .ref()
+            .child("${widget.estateId}/$newFileName");
+        await ref.putFile(File(image.path));
+
+        // // Get download URL and store it in the database
+        // String imageUrl = await ref.getDownloadURL();
+        // String estate = "Coffee";
+        // if (widget.estateType == "1") {
+        //   estate = "Hottel";
+        // } else if (widget.estateType == "2") {
+        //   estate = "Coffee";
+        // } else {
+        //   estate = "Restaurant";
+        // }
+        // await FirebaseDatabase.instance
+        //     .ref("App/Estate/$estate/${widget.estateId}/EstateImages")
+        //     .push()
+        //     .set(imageUrl);
+
+        nextIndex++; // Increment index for the next image
+      }
+
+      setState(() {
+        newImageFiles.clear();
+      });
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content:
+                Text(getTranslated(context, "Images updated successfully"))),
+      );
+    } catch (e) {
+      print("Error saving images: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+            content: Text(getTranslated(context, "Failed to update images"))),
+      );
     }
   }
 
@@ -384,6 +545,117 @@ class _EditEstateState extends State<EditEstate> {
                 padding: const EdgeInsets.symmetric(vertical: 10),
                 children: [
                   SizedBox(height: 25),
+                  TextHeader(getTranslated(context, "Edit Estate Images")),
+                  const SizedBox(height: 10),
+
+                  // Display Existing Images
+                  if (existingImageUrls.isNotEmpty)
+                    SizedBox(
+                      height: 180,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: existingImageUrls.length,
+                        itemBuilder: (context, index) {
+                          return Stack(
+                            children: [
+                              Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 5),
+                                width: 150,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: CachedNetworkImage(
+                                  imageUrl: existingImageUrls[index],
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 5,
+                                right: 5,
+                                child: InkWell(
+                                  onTap: () =>
+                                      removeImage(existingImageUrls[index]),
+                                  child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.red,
+                                    child: Icon(Icons.close,
+                                        size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    )
+                  else
+                    Container(
+                      alignment: Alignment.center,
+                      padding: const EdgeInsets.all(16),
+                      child: Text(getTranslated(context, "No images found.")),
+                    ),
+
+                  // Button to Pick New Images
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: pickImages,
+                    child: Text(getTranslated(context, "Add New Images")),
+                  ),
+
+                  // Display Selected New Images
+                  if (newImageFiles.isNotEmpty)
+                    SizedBox(
+                      height: 180,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: newImageFiles.length,
+                        itemBuilder: (context, index) {
+                          return Stack(
+                            children: [
+                              Container(
+                                margin:
+                                    const EdgeInsets.symmetric(horizontal: 5),
+                                width: 150,
+                                height: 180,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Image.file(
+                                  File(newImageFiles[index].path),
+                                  fit: BoxFit.cover,
+                                ),
+                              ),
+                              Positioned(
+                                top: 5,
+                                right: 5,
+                                child: InkWell(
+                                  onTap: () {
+                                    setState(() {
+                                      newImageFiles.removeAt(index);
+                                    });
+                                  },
+                                  child: const CircleAvatar(
+                                    radius: 12,
+                                    backgroundColor: Colors.red,
+                                    child: Icon(Icons.close,
+                                        size: 14, color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+
+                  // Save Changes Button
+                  const SizedBox(height: 10),
+                  ElevatedButton(
+                    onPressed: saveUpdatedImages,
+                    child: Text(getTranslated(context, "Save Images")),
+                  ),
                   TextHeader("Information in Arabic"),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),

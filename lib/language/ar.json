@@ -479,5 +479,11 @@
   "My Restaurants": "مطاعمي",
   "You have not added any coffees yet": "لم تقم بإضافة أي مقاهي بعد",
   "My Coffees": "مقاهيّ",
-  "No feedback available.": "لا توجد تقييمات متاحة."
+  "No feedback available.": "لا توجد تقييمات متاحة.",
+  "Edit Estate Images": "تعديل صور العقار",
+  "No images found.": "لم يتم العثور على صور.",
+  "Add New Images": "إضافة صور جديدة",
+  "Save Images": "حفظ الصور",
+  "Images updated successfully": "تم تحديث الصور بنجاح",
+  "Failed to update images": "فشل في تحديث الصور"
 }

@@ -219,28 +219,56 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
     );
   }
 
-  Future<void> _fetchImageUrls() async {
-    int index = 0;
-    bool hasMoreImages = true;
-    List<String> imageUrls = [];
+  Future<List<String>> fetchExistingImages() async {
+    List<String> existingImages = [];
+    try {
+      final storageRef = FirebaseStorage.instance.ref().child(widget.estateId);
+      final ListResult result = await storageRef.listAll();
 
-    while (hasMoreImages) {
-      try {
-        final storageRef = FirebaseStorage.instance
-            .ref()
-            .child('${widget.estateId}/$index.jpg');
-        final imageUrl = await storageRef.getDownloadURL();
-        imageUrls.add(imageUrl);
-        await _cacheManager.getSingleFile(imageUrl); // Cache the image
-      } catch (e) {
-        hasMoreImages = false;
+      for (var item in result.items) {
+        existingImages.add(item.name);
       }
-      index++;
-    }
 
-    setState(() {
-      _imageUrls = imageUrls;
-    });
+      // Sort the images numerically
+      existingImages.sort((a, b) {
+        int numA = int.tryParse(a.split('.').first) ?? 0;
+        int numB = int.tryParse(b.split('.').first) ?? 0;
+        return numA.compareTo(numB);
+      });
+
+      print("Existing images in storage: $existingImages");
+      return existingImages;
+    } catch (e) {
+      print("Error fetching images: $e");
+      return [];
+    }
+  }
+
+  Future<void> _fetchImageUrls() async {
+    List<String> imageUrls = [];
+    try {
+      List<String> existingImages = await fetchExistingImages();
+
+      for (var imageName in existingImages) {
+        try {
+          final storageRef = FirebaseStorage.instance
+              .ref()
+              .child("${widget.estateId}/$imageName");
+          final imageUrl = await storageRef.getDownloadURL();
+          imageUrls.add(imageUrl);
+        } catch (e) {
+          print("Error fetching URL for $imageName: $e");
+        }
+      }
+
+      setState(() {
+        _imageUrls = imageUrls;
+      });
+
+      print("Fetched image URLs: $_imageUrls");
+    } catch (e) {
+      print("Error fetching image URLs: $e");
+    }
   }
 
   Future<void> _fetchUserRatings() async {
@@ -542,9 +570,12 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                   builder: (context) => EditEstate(
                     objEstate: estate,
                     LstRooms: LstRooms,
+                    estateType: widget.estateType,
+                    estateId: widget.estateId,
                   ),
                 ));
                 _fetchEstateData();
+                _fetchImageUrls();
               },
             ),
           IconButton(
@@ -596,545 +627,625 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                 ),
               ],
             )
-          : SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Image carousel with gradient overlay
-                    // Displaying the fetched images in a carousel
-                    _imageUrls.isEmpty
-                        ? Container(
-                            height: 200,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(15),
-                              color: Colors.grey[200],
-                            ),
-                            child: Shimmer.fromColors(
-                              baseColor: Colors.grey[300]!,
-                              highlightColor: Colors.grey[100]!,
-                              child: Container(
-                                height: 200,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(15),
-                                  color: Colors.white,
-                                ),
+          : RefreshIndicator(
+              onRefresh: () async {
+                await _fetchImageUrls();
+              },
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Image carousel with gradient overlay
+                      // Displaying the fetched images in a carousel
+                      _imageUrls.isEmpty
+                          ? Container(
+                              height: 200,
+                              decoration: BoxDecoration(
+                                borderRadius: BorderRadius.circular(15),
+                                color: Colors.grey[200],
                               ),
-                            ),
-                          )
-                        : Stack(
-                            children: [
-                              SizedBox(
-                                height: 200,
-                                child: PageView.builder(
-                                  itemCount: _imageUrls.length,
-                                  onPageChanged: (index) {
-                                    setState(() {
-                                      _currentImageIndex = index;
-                                    });
-                                  },
-                                  itemBuilder: (context, index) {
-                                    return Stack(
-                                      children: [
-                                        ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(15),
-                                          child: CachedNetworkImage(
-                                            imageUrl: _imageUrls[index],
-                                            cacheManager: _cacheManager,
-                                            placeholder: (context, url) =>
-                                                Container(
-                                                    color: Colors.grey[300]),
-                                            errorWidget:
-                                                (context, url, error) =>
-                                                    const Icon(Icons.error),
-                                            fit: BoxFit.cover,
-                                            width: double.infinity,
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                ),
-                              ),
-                              Positioned(
-                                bottom: 10,
-                                right: 10,
+                              child: Shimmer.fromColors(
+                                baseColor: Colors.grey[300]!,
+                                highlightColor: Colors.grey[100]!,
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                      vertical: 4, horizontal: 8),
+                                  height: 200,
                                   decoration: BoxDecoration(
-                                    color: Colors.black54,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Text(
-                                    '${_currentImageIndex + 1} / ${_imageUrls.length}',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                    ),
+                                    borderRadius: BorderRadius.circular(15),
+                                    color: Colors.white,
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                    const SizedBox(height: 16),
-                    Text(
-                      displayName,
-                      style: kTeritary.copyWith(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      displayBio,
-                      style: const TextStyle(fontSize: 16, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, color: Colors.orange, size: 16),
-                        const SizedBox(width: 4),
-                        Text(
-                          _overallRating.toStringAsFixed(1),
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    // Info chips section using the new InfoChip widget with onTap callbacks
-                    // Wrap(
-                    //   spacing: 10.0,
-                    //   runSpacing: 10.0,
-                    //   children: [
-                    //     if (widget.type == "3")
-                    //       InfoChip(
-                    //         icon: Icons.fastfood,
-                    //         label: getTranslatedTypeOfRestaurant(
-                    //           context,
-                    //           estate['TypeofRestaurant'] ??
-                    //               widget.typeOfRestaurant,
-                    //         ),
-                    //         onTap: () => _showOptionsList(
-                    //           getTranslated(context, "Type of Restaurant"),
-                    //           restaurantOptions.cast<Map<String, dynamic>>(),
-                    //         ),
-                    //       ),
-                    //     if (widget.type == "3" || widget.type == "2")
-                    //       InfoChip(
-                    //         icon: Icons.home,
-                    //         label: getTranslatedSessions(
-                    //           context,
-                    //           estate['Sessions'] ?? widget.sessions,
-                    //         ),
-                    //         onTap: () => _showOptionsList(
-                    //           getTranslated(context, "Sessions"),
-                    //           sessionsOptions.cast<Map<String, dynamic>>(),
-                    //         ),
-                    //       ),
-                    //     InfoChip(
-                    //       icon: Icons.grain,
-                    //       label: widget.type == "1"
-                    //           ? getTranslatedHotelEntry(
-                    //               context,
-                    //               estate['Entry'] ?? widget.entry,
-                    //             )
-                    //           : getTranslatedEntry(
-                    //               context,
-                    //               estate['Entry'] ?? widget.entry,
-                    //             ),
-                    //       onTap: () {
-                    //         if (widget.type == "1") {
-                    //           _showOptionsList(
-                    //             getTranslated(context, "Hotel Entry"),
-                    //             hotelEntryOptions.cast<Map<String, dynamic>>(),
-                    //           );
-                    //         } else {
-                    //           _showOptionsList(
-                    //             getTranslated(context, "Entry"),
-                    //             entryOptions.cast<Map<String, dynamic>>(),
-                    //           );
-                    //         }
-                    //       },
-                    //     ),
-                    //     InfoChip(
-                    //       icon: Icons.music_note,
-                    //       label: (widget.type == "3" || widget.type == "1")
-                    //           ? ((estate['Music'] ?? widget.music) == "1"
-                    //               ? getTranslated(context, "There is music")
-                    //               : getTranslated(context, "There is no music"))
-                    //           : (widget.type == "2"
-                    //               ? ((estate['Music'] ?? widget.music) == "1"
-                    //                   ? getTranslatedCoffeeMusicOptions(
-                    //                       context,
-                    //                       estate['Lstmusic'] ?? widget.lstMusic,
-                    //                     )
-                    //                   : getTranslated(
-                    //                       context, "There is no music"))
-                    //               : getTranslated(
-                    //                   context, "There is no music")),
-                    //     ),
-                    //     if (widget.type != "1")
-                    //       InfoChip(
-                    //         icon: Icons.child_care,
-                    //         label: (estate['HasKidsArea'] ??
-                    //                     widget.hasKidsArea) ==
-                    //                 "1"
-                    //             ? getTranslated(context, "We have kids area")
-                    //             : getTranslated(
-                    //                 context, "We don't have kids area"),
-                    //       ),
-                    //     if (widget.type == "1")
-                    //       InfoChip(
-                    //         icon: Icons.bathtub,
-                    //         label: (estate['HasJacuzziInRoom'] ??
-                    //                     widget.hasJacuzziInRoom) ==
-                    //                 "1"
-                    //             ? getTranslated(context, "We have jacuzzi")
-                    //             : getTranslated(
-                    //                 context, "We don't have jacuzzi"),
-                    //       ),
-                    //     InfoChip(
-                    //       icon: Icons.directions_car,
-                    //       label: (estate['HasValet'] ?? widget.hasValet) == "1"
-                    //           ? getTranslated(
-                    //               context, "Valet service available")
-                    //           : getTranslated(
-                    //               context, "No valet service available"),
-                    //     ),
-                    //     if ((estate['HasValet'] ?? widget.hasValet) == "1")
-                    //       InfoChip(
-                    //         icon: Icons.money,
-                    //         label: (estate['ValetWithFees'] ??
-                    //                     widget.valetWithFees) ==
-                    //                 "1"
-                    //             ? getTranslated(context, "Valet is not free")
-                    //             : getTranslated(context, "Valet is free"),
-                    //       ),
-                    //     if (widget.type == "1")
-                    //       InfoChip(
-                    //         icon: Icons.pool,
-                    //         label: (estate['HasSwimmingPool'] ??
-                    //                     widget.hasSwimmingPool) ==
-                    //                 "1"
-                    //             ? getTranslated(
-                    //                 context, "We have swimming pool")
-                    //             : getTranslated(
-                    //                 context, "We don't have swimming pool"),
-                    //       ),
-                    //     if (widget.type == "1")
-                    //       InfoChip(
-                    //         icon: Icons.spa,
-                    //         label:
-                    //             (estate['HasMassage'] ?? widget.hasMassage) ==
-                    //                     "1"
-                    //                 ? getTranslated(context, "We have massage")
-                    //                 : getTranslated(
-                    //                     context, "We don't have massage"),
-                    //       ),
-                    //     if (widget.type == "1")
-                    //       InfoChip(
-                    //         icon: Icons.fitness_center,
-                    //         label: (estate['HasGym'] ?? widget.hasGym) == "1"
-                    //             ? getTranslated(context, "We have gym")
-                    //             : getTranslated(context, "We don't have gym"),
-                    //       ),
-                    //     if (widget.type == "1")
-                    //       InfoChip(
-                    //         icon: Icons.content_cut,
-                    //         label:
-                    //             (estate['HasBarber'] ?? widget.hasBarber) == "1"
-                    //                 ? getTranslated(context, "We have barber")
-                    //                 : getTranslated(
-                    //                     context, "We don't have barber"),
-                    //       ),
-                    //     InfoChip(
-                    //       icon: Icons.smoking_rooms,
-                    //       label: (estate['IsSmokingAllowed'] ??
-                    //                   widget.isSmokingAllowed) ==
-                    //               "1"
-                    //           ? getTranslated(context, "Smoking is allowed")
-                    //           : getTranslated(
-                    //               context, "Smoking is not allowed"),
-                    //     ),
-                    //   ],
-                    // ),
-                    Wrap(
-                      spacing: 10.0,
-                      runSpacing: 10.0,
-                      children: [
-                        if (widget.type == "3")
-                          InfoChip(
-                            icon: Icons.fastfood,
-                            label: getTranslatedTypeOfRestaurant(
-                              context,
-                              estate['TypeofRestaurant'] ??
-                                  widget.typeOfRestaurant,
-                            ),
-                            onTap: () => _showOptionsList(
-                              getTranslated(context, "Type of Restaurant"),
-                              restaurantOptions.cast<Map<String, dynamic>>(),
-                            ),
-                          ),
-                        if (widget.type == "3" || widget.type == "2")
-                          InfoChip(
-                            icon: Icons.home,
-                            label: getTranslatedSessions(
-                              context,
-                              estate['Sessions'] ?? widget.sessions,
-                            ),
-                            onTap: () => _showOptionsList(
-                              getTranslated(context, "Sessions"),
-                              sessionsOptions.cast<Map<String, dynamic>>(),
-                            ),
-                          ),
-                        if (widget.type == "1")
-                          InfoChip(
-                            icon: Icons.grain,
-                            label: getTranslatedHotelEntry(
-                              context,
-                              estate['Entry'] ?? widget.entry,
-                            ),
-                            onTap: () {
-                              _showOptionsList(
-                                getTranslated(context, "Hotel Entry"),
-                                hotelEntryOptions.cast<Map<String, dynamic>>(),
-                              );
-                            },
-                          ),
-                        if (widget.type != "1")
-                          InfoChip(
-                            icon: Icons.grain,
-                            label: getTranslatedEntry(
-                              context,
-                              estate['Entry'] ?? widget.entry,
-                            ),
-                            onTap: () {
-                              _showOptionsList(
-                                getTranslated(context, "Entry"),
-                                entryOptions.cast<Map<String, dynamic>>(),
-                              );
-                            },
-                          ),
-                        if ((widget.type == "3" || widget.type == "1") &&
-                            (estate['Music'] != null &&
-                                estate['Music'] != "" &&
-                                estate['Music'] != "0"))
-                          InfoChip(
-                            icon: Icons.music_note,
-                            label: estate['Music'] == "1"
-                                ? getTranslated(context, "There is music")
-                                : getTranslated(context, "There is no music"),
-                          ),
-                        if (widget.type == "2" &&
-                            (estate['Music'] != null &&
-                                estate['Music'] != "" &&
-                                estate['Music'] != "0"))
-                          InfoChip(
-                            icon: Icons.music_note,
-                            label: estate['Music'] == "1"
-                                ? getTranslatedCoffeeMusicOptions(
-                                    context,
-                                    estate['Lstmusic'] ?? widget.lstMusic,
-                                  )
-                                : getTranslated(context, "There is no music"),
-                          ),
-                        if ((widget.type == "2" || widget.type == "3") &&
-                            (estate['HasKidsArea'] != null &&
-                                estate['HasKidsArea'] != "" &&
-                                estate['HasKidsArea'] != "0"))
-                          InfoChip(
-                            icon: Icons.child_care,
-                            label: estate['HasKidsArea'] == "1"
-                                ? getTranslated(context, "We have kids area")
-                                : getTranslated(
-                                    context, "We don't have kids area"),
-                          ),
-                        if (widget.type == "1" &&
-                            (estate['HasJacuzziInRoom'] != null &&
-                                estate['HasJacuzziInRoom'] != "" &&
-                                estate['HasJacuzziInRoom'] != "0"))
-                          InfoChip(
-                            icon: Icons.bathtub,
-                            label: estate['HasJacuzziInRoom'] == "1"
-                                ? getTranslated(context, "We have jacuzzi")
-                                : getTranslated(
-                                    context, "We don't have jacuzzi"),
-                          ),
-                        if (estate['HasValet'] == "1")
-                          InfoChip(
-                            icon: Icons.directions_car,
-                            label: getTranslated(
-                                context, "Valet service available"),
-                          ),
-                        if (estate['HasValet'] == "1")
-                          InfoChip(
-                            icon: Icons.money,
-                            label: estate['ValetWithFees'] == "1"
-                                ? getTranslated(context, "Valet is not free")
-                                : getTranslated(context, "Valet is free"),
-                          ),
-                        if (widget.type == "1" &&
-                            (estate['HasSwimmingPool'] != null &&
-                                estate['HasSwimmingPool'] != "" &&
-                                estate['HasSwimmingPool'] != "0"))
-                          InfoChip(
-                            icon: Icons.pool,
-                            label: estate['HasSwimmingPool'] == "1"
-                                ? getTranslated(
-                                    context, "We have swimming pool")
-                                : getTranslated(
-                                    context, "We don't have swimming pool"),
-                          ),
-                        if (widget.type == "1" &&
-                            (estate['HasMassage'] != null &&
-                                estate['HasMassage'] != "" &&
-                                estate['HasMassage'] != "0"))
-                          InfoChip(
-                            icon: Icons.spa,
-                            label: estate['HasMassage'] == "1"
-                                ? getTranslated(context, "We have massage")
-                                : getTranslated(
-                                    context, "We don't have massage"),
-                          ),
-                        if (widget.type == "1" &&
-                            (estate['HasGym'] != null &&
-                                estate['HasGym'] != "" &&
-                                estate['HasGym'] != "0"))
-                          InfoChip(
-                            icon: Icons.fitness_center,
-                            label: estate['HasGym'] == "1"
-                                ? getTranslated(context, "We have gym")
-                                : getTranslated(context, "We don't have gym"),
-                          ),
-                        if (widget.type == "1" &&
-                            (estate['HasBarber'] != null &&
-                                estate['HasBarber'] != "" &&
-                                estate['HasBarber'] != "0"))
-                          InfoChip(
-                            icon: Icons.content_cut,
-                            label: estate['HasBarber'] == "1"
-                                ? getTranslated(context, "We have barber")
-                                : getTranslated(
-                                    context, "We don't have barber"),
-                          ),
-                        if (estate['IsSmokingAllowed'] == "1")
-                          InfoChip(
-                            icon: Icons.smoking_rooms,
-                            label: getTranslated(context, "Smoking is allowed"),
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    AutoSizeText(
-                      getTranslated(context, "Feedback"),
-                      style: kTeritary.copyWith(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      maxLines: 1,
-                      minFontSize: 12,
-                    ),
-                    const SizedBox(height: 8),
-                    _feedbackList.isEmpty
-                        ? Center(
-                            child: Text(getTranslated(
-                                context, "No feedback available.")))
-                        : SizedBox(
-                            height: 300,
-                            child: ListView.separated(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _feedbackList.length,
-                              separatorBuilder: (context, index) =>
-                                  const SizedBox(width: 16),
-                              itemBuilder: (context, index) {
-                                final feedback = _feedbackList[index];
-                                return Container(
-                                  width:
-                                      MediaQuery.of(context).size.width * 0.8,
-                                  child: Card(
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    elevation: 4,
-                                    margin: EdgeInsets.zero,
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(16.0),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                            )
+                          : Stack(
+                              children: [
+                                SizedBox(
+                                  height: 200,
+                                  child: PageView.builder(
+                                    itemCount: _imageUrls.length,
+                                    onPageChanged: (index) {
+                                      setState(() {
+                                        _currentImageIndex = index;
+                                      });
+                                    },
+                                    itemBuilder: (context, index) {
+                                      return Stack(
                                         children: [
-                                          Row(
-                                            children: [
-                                              CircleAvatar(
-                                                radius: 25,
-                                                backgroundColor:
-                                                    kDeepPurpleColor,
-                                                backgroundImage: feedback[
-                                                                'profileImageUrl'] !=
-                                                            null &&
-                                                        feedback[
-                                                                'profileImageUrl']
-                                                            .toString()
-                                                            .isNotEmpty
-                                                    ? CachedNetworkImageProvider(
-                                                        feedback[
-                                                            'profileImageUrl'])
-                                                    : null,
-                                                child: feedback['profileImageUrl'] ==
-                                                            null ||
-                                                        feedback[
-                                                                'profileImageUrl']
-                                                            .toString()
-                                                            .isEmpty
-                                                    ? Text(
-                                                        (feedback['userName'] !=
-                                                                    null &&
-                                                                (feedback['userName']
-                                                                        as String)
-                                                                    .isNotEmpty)
-                                                            ? (feedback['userName']
-                                                                    as String)[0]
-                                                                .toUpperCase()
-                                                            : '?',
+                                          ClipRRect(
+                                            borderRadius:
+                                                BorderRadius.circular(15),
+                                            child: CachedNetworkImage(
+                                              imageUrl: _imageUrls[index],
+                                              cacheManager: _cacheManager,
+                                              placeholder: (context, url) =>
+                                                  Container(
+                                                      color: Colors.grey[300]),
+                                              errorWidget:
+                                                  (context, url, error) =>
+                                                      const Icon(Icons.error),
+                                              fit: BoxFit.cover,
+                                              width: double.infinity,
+                                            ),
+                                          ),
+                                        ],
+                                      );
+                                    },
+                                  ),
+                                ),
+                                Positioned(
+                                  bottom: 10,
+                                  right: 10,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        vertical: 4, horizontal: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black54,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      '${_currentImageIndex + 1} / ${_imageUrls.length}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                      const SizedBox(height: 16),
+                      Text(
+                        displayName,
+                        style: kTeritary.copyWith(
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        displayBio,
+                        style:
+                            const TextStyle(fontSize: 16, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          const Icon(Icons.star,
+                              color: Colors.orange, size: 16),
+                          const SizedBox(width: 4),
+                          Text(
+                            _overallRating.toStringAsFixed(1),
+                            style: const TextStyle(
+                                fontSize: 14, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      // Info chips section using the new InfoChip widget with onTap callbacks
+                      // Wrap(
+                      //   spacing: 10.0,
+                      //   runSpacing: 10.0,
+                      //   children: [
+                      //     if (widget.type == "3")
+                      //       InfoChip(
+                      //         icon: Icons.fastfood,
+                      //         label: getTranslatedTypeOfRestaurant(
+                      //           context,
+                      //           estate['TypeofRestaurant'] ??
+                      //               widget.typeOfRestaurant,
+                      //         ),
+                      //         onTap: () => _showOptionsList(
+                      //           getTranslated(context, "Type of Restaurant"),
+                      //           restaurantOptions.cast<Map<String, dynamic>>(),
+                      //         ),
+                      //       ),
+                      //     if (widget.type == "3" || widget.type == "2")
+                      //       InfoChip(
+                      //         icon: Icons.home,
+                      //         label: getTranslatedSessions(
+                      //           context,
+                      //           estate['Sessions'] ?? widget.sessions,
+                      //         ),
+                      //         onTap: () => _showOptionsList(
+                      //           getTranslated(context, "Sessions"),
+                      //           sessionsOptions.cast<Map<String, dynamic>>(),
+                      //         ),
+                      //       ),
+                      //     InfoChip(
+                      //       icon: Icons.grain,
+                      //       label: widget.type == "1"
+                      //           ? getTranslatedHotelEntry(
+                      //               context,
+                      //               estate['Entry'] ?? widget.entry,
+                      //             )
+                      //           : getTranslatedEntry(
+                      //               context,
+                      //               estate['Entry'] ?? widget.entry,
+                      //             ),
+                      //       onTap: () {
+                      //         if (widget.type == "1") {
+                      //           _showOptionsList(
+                      //             getTranslated(context, "Hotel Entry"),
+                      //             hotelEntryOptions.cast<Map<String, dynamic>>(),
+                      //           );
+                      //         } else {
+                      //           _showOptionsList(
+                      //             getTranslated(context, "Entry"),
+                      //             entryOptions.cast<Map<String, dynamic>>(),
+                      //           );
+                      //         }
+                      //       },
+                      //     ),
+                      //     InfoChip(
+                      //       icon: Icons.music_note,
+                      //       label: (widget.type == "3" || widget.type == "1")
+                      //           ? ((estate['Music'] ?? widget.music) == "1"
+                      //               ? getTranslated(context, "There is music")
+                      //               : getTranslated(context, "There is no music"))
+                      //           : (widget.type == "2"
+                      //               ? ((estate['Music'] ?? widget.music) == "1"
+                      //                   ? getTranslatedCoffeeMusicOptions(
+                      //                       context,
+                      //                       estate['Lstmusic'] ?? widget.lstMusic,
+                      //                     )
+                      //                   : getTranslated(
+                      //                       context, "There is no music"))
+                      //               : getTranslated(
+                      //                   context, "There is no music")),
+                      //     ),
+                      //     if (widget.type != "1")
+                      //       InfoChip(
+                      //         icon: Icons.child_care,
+                      //         label: (estate['HasKidsArea'] ??
+                      //                     widget.hasKidsArea) ==
+                      //                 "1"
+                      //             ? getTranslated(context, "We have kids area")
+                      //             : getTranslated(
+                      //                 context, "We don't have kids area"),
+                      //       ),
+                      //     if (widget.type == "1")
+                      //       InfoChip(
+                      //         icon: Icons.bathtub,
+                      //         label: (estate['HasJacuzziInRoom'] ??
+                      //                     widget.hasJacuzziInRoom) ==
+                      //                 "1"
+                      //             ? getTranslated(context, "We have jacuzzi")
+                      //             : getTranslated(
+                      //                 context, "We don't have jacuzzi"),
+                      //       ),
+                      //     InfoChip(
+                      //       icon: Icons.directions_car,
+                      //       label: (estate['HasValet'] ?? widget.hasValet) == "1"
+                      //           ? getTranslated(
+                      //               context, "Valet service available")
+                      //           : getTranslated(
+                      //               context, "No valet service available"),
+                      //     ),
+                      //     if ((estate['HasValet'] ?? widget.hasValet) == "1")
+                      //       InfoChip(
+                      //         icon: Icons.money,
+                      //         label: (estate['ValetWithFees'] ??
+                      //                     widget.valetWithFees) ==
+                      //                 "1"
+                      //             ? getTranslated(context, "Valet is not free")
+                      //             : getTranslated(context, "Valet is free"),
+                      //       ),
+                      //     if (widget.type == "1")
+                      //       InfoChip(
+                      //         icon: Icons.pool,
+                      //         label: (estate['HasSwimmingPool'] ??
+                      //                     widget.hasSwimmingPool) ==
+                      //                 "1"
+                      //             ? getTranslated(
+                      //                 context, "We have swimming pool")
+                      //             : getTranslated(
+                      //                 context, "We don't have swimming pool"),
+                      //       ),
+                      //     if (widget.type == "1")
+                      //       InfoChip(
+                      //         icon: Icons.spa,
+                      //         label:
+                      //             (estate['HasMassage'] ?? widget.hasMassage) ==
+                      //                     "1"
+                      //                 ? getTranslated(context, "We have massage")
+                      //                 : getTranslated(
+                      //                     context, "We don't have massage"),
+                      //       ),
+                      //     if (widget.type == "1")
+                      //       InfoChip(
+                      //         icon: Icons.fitness_center,
+                      //         label: (estate['HasGym'] ?? widget.hasGym) == "1"
+                      //             ? getTranslated(context, "We have gym")
+                      //             : getTranslated(context, "We don't have gym"),
+                      //       ),
+                      //     if (widget.type == "1")
+                      //       InfoChip(
+                      //         icon: Icons.content_cut,
+                      //         label:
+                      //             (estate['HasBarber'] ?? widget.hasBarber) == "1"
+                      //                 ? getTranslated(context, "We have barber")
+                      //                 : getTranslated(
+                      //                     context, "We don't have barber"),
+                      //       ),
+                      //     InfoChip(
+                      //       icon: Icons.smoking_rooms,
+                      //       label: (estate['IsSmokingAllowed'] ??
+                      //                   widget.isSmokingAllowed) ==
+                      //               "1"
+                      //           ? getTranslated(context, "Smoking is allowed")
+                      //           : getTranslated(
+                      //               context, "Smoking is not allowed"),
+                      //     ),
+                      //   ],
+                      // ),
+                      Wrap(
+                        spacing: 10.0,
+                        runSpacing: 10.0,
+                        children: [
+                          if (widget.type == "3")
+                            InfoChip(
+                              icon: Icons.fastfood,
+                              label: getTranslatedTypeOfRestaurant(
+                                context,
+                                estate['TypeofRestaurant'] ??
+                                    widget.typeOfRestaurant,
+                              ),
+                              onTap: () => _showOptionsList(
+                                getTranslated(context, "Type of Restaurant"),
+                                restaurantOptions.cast<Map<String, dynamic>>(),
+                              ),
+                            ),
+                          if (widget.type == "3" || widget.type == "2")
+                            InfoChip(
+                              icon: Icons.home,
+                              label: getTranslatedSessions(
+                                context,
+                                estate['Sessions'] ?? widget.sessions,
+                              ),
+                              onTap: () => _showOptionsList(
+                                getTranslated(context, "Sessions"),
+                                sessionsOptions.cast<Map<String, dynamic>>(),
+                              ),
+                            ),
+                          if (widget.type == "1")
+                            InfoChip(
+                              icon: Icons.grain,
+                              label: getTranslatedHotelEntry(
+                                context,
+                                estate['Entry'] ?? widget.entry,
+                              ),
+                              onTap: () {
+                                _showOptionsList(
+                                  getTranslated(context, "Hotel Entry"),
+                                  hotelEntryOptions
+                                      .cast<Map<String, dynamic>>(),
+                                );
+                              },
+                            ),
+                          if (widget.type != "1")
+                            InfoChip(
+                              icon: Icons.grain,
+                              label: getTranslatedEntry(
+                                context,
+                                estate['Entry'] ?? widget.entry,
+                              ),
+                              onTap: () {
+                                _showOptionsList(
+                                  getTranslated(context, "Entry"),
+                                  entryOptions.cast<Map<String, dynamic>>(),
+                                );
+                              },
+                            ),
+                          if ((widget.type == "3" || widget.type == "1") &&
+                              (estate['Music'] != null &&
+                                  estate['Music'] != "" &&
+                                  estate['Music'] != "0"))
+                            InfoChip(
+                              icon: Icons.music_note,
+                              label: estate['Music'] == "1"
+                                  ? getTranslated(context, "There is music")
+                                  : getTranslated(context, "There is no music"),
+                            ),
+                          if (widget.type == "2" &&
+                              (estate['Music'] != null &&
+                                  estate['Music'] != "" &&
+                                  estate['Music'] != "0"))
+                            InfoChip(
+                              icon: Icons.music_note,
+                              label: estate['Music'] == "1"
+                                  ? getTranslatedCoffeeMusicOptions(
+                                      context,
+                                      estate['Lstmusic'] ?? widget.lstMusic,
+                                    )
+                                  : getTranslated(context, "There is no music"),
+                            ),
+                          if ((widget.type == "2" || widget.type == "3") &&
+                              (estate['HasKidsArea'] != null &&
+                                  estate['HasKidsArea'] != "" &&
+                                  estate['HasKidsArea'] != "0"))
+                            InfoChip(
+                              icon: Icons.child_care,
+                              label: estate['HasKidsArea'] == "1"
+                                  ? getTranslated(context, "We have kids area")
+                                  : getTranslated(
+                                      context, "We don't have kids area"),
+                            ),
+                          if (widget.type == "1" &&
+                              (estate['HasJacuzziInRoom'] != null &&
+                                  estate['HasJacuzziInRoom'] != "" &&
+                                  estate['HasJacuzziInRoom'] != "0"))
+                            InfoChip(
+                              icon: Icons.bathtub,
+                              label: estate['HasJacuzziInRoom'] == "1"
+                                  ? getTranslated(context, "We have jacuzzi")
+                                  : getTranslated(
+                                      context, "We don't have jacuzzi"),
+                            ),
+                          if (estate['HasValet'] == "1")
+                            InfoChip(
+                              icon: Icons.directions_car,
+                              label: getTranslated(
+                                  context, "Valet service available"),
+                            ),
+                          if (estate['HasValet'] == "1")
+                            InfoChip(
+                              icon: Icons.money,
+                              label: estate['ValetWithFees'] == "1"
+                                  ? getTranslated(context, "Valet is not free")
+                                  : getTranslated(context, "Valet is free"),
+                            ),
+                          if (widget.type == "1" &&
+                              (estate['HasSwimmingPool'] != null &&
+                                  estate['HasSwimmingPool'] != "" &&
+                                  estate['HasSwimmingPool'] != "0"))
+                            InfoChip(
+                              icon: Icons.pool,
+                              label: estate['HasSwimmingPool'] == "1"
+                                  ? getTranslated(
+                                      context, "We have swimming pool")
+                                  : getTranslated(
+                                      context, "We don't have swimming pool"),
+                            ),
+                          if (widget.type == "1" &&
+                              (estate['HasMassage'] != null &&
+                                  estate['HasMassage'] != "" &&
+                                  estate['HasMassage'] != "0"))
+                            InfoChip(
+                              icon: Icons.spa,
+                              label: estate['HasMassage'] == "1"
+                                  ? getTranslated(context, "We have massage")
+                                  : getTranslated(
+                                      context, "We don't have massage"),
+                            ),
+                          if (widget.type == "1" &&
+                              (estate['HasGym'] != null &&
+                                  estate['HasGym'] != "" &&
+                                  estate['HasGym'] != "0"))
+                            InfoChip(
+                              icon: Icons.fitness_center,
+                              label: estate['HasGym'] == "1"
+                                  ? getTranslated(context, "We have gym")
+                                  : getTranslated(context, "We don't have gym"),
+                            ),
+                          if (widget.type == "1" &&
+                              (estate['HasBarber'] != null &&
+                                  estate['HasBarber'] != "" &&
+                                  estate['HasBarber'] != "0"))
+                            InfoChip(
+                              icon: Icons.content_cut,
+                              label: estate['HasBarber'] == "1"
+                                  ? getTranslated(context, "We have barber")
+                                  : getTranslated(
+                                      context, "We don't have barber"),
+                            ),
+                          if (estate['IsSmokingAllowed'] == "1")
+                            InfoChip(
+                              icon: Icons.smoking_rooms,
+                              label:
+                                  getTranslated(context, "Smoking is allowed"),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      AutoSizeText(
+                        getTranslated(context, "Feedback"),
+                        style: kTeritary.copyWith(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 1,
+                        minFontSize: 12,
+                      ),
+                      const SizedBox(height: 8),
+                      _feedbackList.isEmpty
+                          ? Center(
+                              child: Text(getTranslated(
+                                  context, "No feedback available.")))
+                          : SizedBox(
+                              height: 300,
+                              child: ListView.separated(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _feedbackList.length,
+                                separatorBuilder: (context, index) =>
+                                    const SizedBox(width: 16),
+                                itemBuilder: (context, index) {
+                                  final feedback = _feedbackList[index];
+                                  return Container(
+                                    width:
+                                        MediaQuery.of(context).size.width * 0.8,
+                                    child: Card(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(15),
+                                      ),
+                                      elevation: 4,
+                                      margin: EdgeInsets.zero,
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16.0),
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Row(
+                                              children: [
+                                                CircleAvatar(
+                                                  radius: 25,
+                                                  backgroundColor:
+                                                      kDeepPurpleColor,
+                                                  backgroundImage: feedback[
+                                                                  'profileImageUrl'] !=
+                                                              null &&
+                                                          feedback[
+                                                                  'profileImageUrl']
+                                                              .toString()
+                                                              .isNotEmpty
+                                                      ? CachedNetworkImageProvider(
+                                                          feedback[
+                                                              'profileImageUrl'])
+                                                      : null,
+                                                  child: feedback['profileImageUrl'] ==
+                                                              null ||
+                                                          feedback[
+                                                                  'profileImageUrl']
+                                                              .toString()
+                                                              .isEmpty
+                                                      ? Text(
+                                                          (feedback['userName'] !=
+                                                                      null &&
+                                                                  (feedback['userName']
+                                                                          as String)
+                                                                      .isNotEmpty)
+                                                              ? (feedback['userName']
+                                                                      as String)[0]
+                                                                  .toUpperCase()
+                                                              : '?',
+                                                          style:
+                                                              const TextStyle(
+                                                            color: Colors.white,
+                                                            fontSize: 20,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        )
+                                                      : null,
+                                                ),
+                                                const SizedBox(width: 10),
+                                                Expanded(
+                                                  child: Column(
+                                                    crossAxisAlignment:
+                                                        CrossAxisAlignment
+                                                            .start,
+                                                    children: [
+                                                      AutoSizeText(
+                                                        feedback['userName'] ??
+                                                            getTranslated(
+                                                                context,
+                                                                'Anonymous'),
                                                         style: const TextStyle(
-                                                          color: Colors.white,
-                                                          fontSize: 20,
                                                           fontWeight:
                                                               FontWeight.bold,
+                                                          fontSize: 16,
                                                         ),
-                                                      )
-                                                    : null,
+                                                        maxLines: 1,
+                                                        minFontSize: 12,
+                                                      ),
+                                                      Text(
+                                                        feedback['feedbackDate'] !=
+                                                                null
+                                                            ? DateFormat.yMMMd()
+                                                                .format(DateTime
+                                                                    .parse(feedback[
+                                                                        'feedbackDate']))
+                                                            : '',
+                                                        style: const TextStyle(
+                                                          fontSize: 12,
+                                                          color: Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                            const SizedBox(height: 8),
+                                            _buildStarRating(
+                                              (feedback['RateForEstate'] ?? 0)
+                                                  .toDouble(),
+                                              size: 16,
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              'Estate Rating: ${feedback['RateForEstate'] ?? 'N/A'}',
+                                              style: const TextStyle(
+                                                fontSize: 12,
+                                                color: Colors.grey,
                                               ),
-                                              const SizedBox(width: 10),
-                                              Expanded(
-                                                child: Column(
+                                            ),
+                                            const Divider(),
+                                            const SizedBox(height: 8),
+                                            Expanded(
+                                              child: SingleChildScrollView(
+                                                child: AutoSizeText(
+                                                  feedback['feedback'] ??
+                                                      getTranslated(context,
+                                                          'No feedback provided'),
+                                                  style: const TextStyle(
+                                                      fontSize: 14),
+                                                  maxLines: 10,
+                                                  minFontSize: 10,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(height: 10),
+                                            Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment
+                                                      .spaceBetween,
+                                              children: [
+                                                Column(
                                                   crossAxisAlignment:
                                                       CrossAxisAlignment.start,
                                                   children: [
-                                                    AutoSizeText(
-                                                      feedback['userName'] ??
-                                                          getTranslated(context,
-                                                              'Anonymous'),
-                                                      style: const TextStyle(
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        fontSize: 16,
-                                                      ),
-                                                      maxLines: 1,
-                                                      minFontSize: 12,
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                            Icons.restaurant,
+                                                            color:
+                                                                Colors.orange,
+                                                            size: 16),
+                                                        const SizedBox(
+                                                            width: 4),
+                                                        _buildStarRating(
+                                                          (feedback['RateForFoodOrDrink'] ??
+                                                                  0)
+                                                              .toDouble(),
+                                                          size: 16,
+                                                        ),
+                                                      ],
                                                     ),
+                                                    const SizedBox(height: 2),
                                                     Text(
-                                                      feedback['feedbackDate'] !=
-                                                              null
-                                                          ? DateFormat.yMMMd()
-                                                              .format(DateTime
-                                                                  .parse(feedback[
-                                                                      'feedbackDate']))
-                                                          : '',
+                                                      'Food Rating: ${feedback['RateForFoodOrDrink'] ?? 'N/A'}',
                                                       style: const TextStyle(
                                                         fontSize: 12,
                                                         color: Colors.grey,
@@ -1142,151 +1253,88 @@ class _ProfileEstateScreenState extends State<ProfileEstateScreen> {
                                                     ),
                                                   ],
                                                 ),
-                                              ),
-                                            ],
-                                          ),
-                                          const SizedBox(height: 8),
-                                          _buildStarRating(
-                                            (feedback['RateForEstate'] ?? 0)
-                                                .toDouble(),
-                                            size: 16,
-                                          ),
-                                          const SizedBox(height: 4),
-                                          Text(
-                                            'Estate Rating: ${feedback['RateForEstate'] ?? 'N/A'}',
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.grey,
-                                            ),
-                                          ),
-                                          const Divider(),
-                                          const SizedBox(height: 8),
-                                          Expanded(
-                                            child: SingleChildScrollView(
-                                              child: AutoSizeText(
-                                                feedback['feedback'] ??
-                                                    getTranslated(context,
-                                                        'No feedback provided'),
-                                                style: const TextStyle(
-                                                    fontSize: 14),
-                                                maxLines: 10,
-                                                minFontSize: 10,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 10),
-                                          Row(
-                                            mainAxisAlignment:
-                                                MainAxisAlignment.spaceBetween,
-                                            children: [
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Icon(
-                                                          Icons.restaurant,
-                                                          color: Colors.orange,
-                                                          size: 16),
-                                                      const SizedBox(width: 4),
-                                                      _buildStarRating(
-                                                        (feedback['RateForFoodOrDrink'] ??
-                                                                0)
-                                                            .toDouble(),
-                                                        size: 16,
-                                                      ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    'Food Rating: ${feedback['RateForFoodOrDrink'] ?? 'N/A'}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey,
+                                                Column(
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment.start,
+                                                  children: [
+                                                    Row(
+                                                      children: [
+                                                        const Icon(
+                                                            Icons
+                                                                .miscellaneous_services,
+                                                            color:
+                                                                Colors.orange,
+                                                            size: 16),
+                                                        const SizedBox(
+                                                            width: 4),
+                                                        _buildStarRating(
+                                                          (feedback['RateForServices'] ??
+                                                                  0)
+                                                              .toDouble(),
+                                                          size: 16,
+                                                        ),
+                                                      ],
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                              Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Row(
-                                                    children: [
-                                                      const Icon(
-                                                          Icons
-                                                              .miscellaneous_services,
-                                                          color: Colors.orange,
-                                                          size: 16),
-                                                      const SizedBox(width: 4),
-                                                      _buildStarRating(
-                                                        (feedback['RateForServices'] ??
-                                                                0)
-                                                            .toDouble(),
-                                                        size: 16,
+                                                    const SizedBox(height: 2),
+                                                    Text(
+                                                      'Service Rating: ${feedback['RateForServices'] ?? 'N/A'}',
+                                                      style: const TextStyle(
+                                                        fontSize: 12,
+                                                        color: Colors.grey,
                                                       ),
-                                                    ],
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    'Service Rating: ${feedback['RateForServices'] ?? 'N/A'}',
-                                                    style: const TextStyle(
-                                                      fontSize: 12,
-                                                      color: Colors.grey,
                                                     ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ],
-                                          ),
-                                        ],
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                    const SizedBox(height: 24),
-                    CustomButton(
-                      text: getTranslated(context, "View your Qr Code"),
-                      onPressed: () {
-                        if (isLoading) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(getTranslated(context,
-                                  'Data is still loading. Please try again shortly.')),
-                            ),
-                          );
-                        } else if (estate.isEmpty ||
-                            estate['IDUser'] == null ||
-                            estate['NameEn'] == null) {
-                          print('Estate Data: $estate');
-                          print('IDUser: ${estate['IDUser']}');
-                          print('NameEn: ${estate['NameEn']}');
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(getTranslated(context,
-                                  'Unable to load QR Code. Please ensure estate data is complete.')),
-                            ),
-                          );
-                        } else {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => QRImage(
-                                userId: estate['IDUser'],
-                                userName: estate['NameEn'],
-                                estateId: widget.estateId,
+                                  );
+                                },
                               ),
                             ),
-                          );
-                        }
-                      },
-                    ),
-                    const SizedBox(height: 16),
-                  ],
+                      const SizedBox(height: 24),
+                      CustomButton(
+                        text: getTranslated(context, "View your Qr Code"),
+                        onPressed: () {
+                          if (isLoading) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(getTranslated(context,
+                                    'Data is still loading. Please try again shortly.')),
+                              ),
+                            );
+                          } else if (estate.isEmpty ||
+                              estate['IDUser'] == null ||
+                              estate['NameEn'] == null) {
+                            print('Estate Data: $estate');
+                            print('IDUser: ${estate['IDUser']}');
+                            print('NameEn: ${estate['NameEn']}');
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(getTranslated(context,
+                                    'Unable to load QR Code. Please ensure estate data is complete.')),
+                              ),
+                            );
+                          } else {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => QRImage(
+                                  userId: estate['IDUser'],
+                                  userName: estate['NameEn'],
+                                  estateId: widget.estateId,
+                                ),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                  ),
                 ),
               ),
             ),

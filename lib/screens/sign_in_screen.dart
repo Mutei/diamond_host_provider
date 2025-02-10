@@ -50,14 +50,10 @@ class _SignInScreenState extends State<SignInScreen> {
   Future<void> _launchTermsUrl() async {
     const url = 'https://www.diamondstel.com/Home/privacypolicy';
     try {
-      if (await canLaunch(url)) {
-        await launch(url, forceWebView: false);
-        print('Launch successful');
-      } else {
-        throw 'Could not launch $url';
-      }
+      bool launched = await launch(url, forceWebView: false);
+      print('Launch successful: $launched');
     } catch (e) {
-      print('Error launching URL: $e');
+      print('Error launching maps: $e');
     }
   }
 
