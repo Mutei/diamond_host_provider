@@ -6,6 +6,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:icons_plus/icons_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../backend/log_out_method.dart';
 import '../constants/colors.dart';
 import '../screens/all_posts_screen.dart';
@@ -40,6 +41,16 @@ class _CustomDrawerState extends State<CustomDrawer> {
     setState(() {
       canAdd = result;
     });
+  }
+
+  Future<void> _launchTermsUrl() async {
+    const url = 'https://www.diamondstel.com/Home/privacypolicy';
+    try {
+      bool launched = await launch(url, forceWebView: false);
+      print('Launch successful: $launched');
+    } catch (e) {
+      print('Error launching maps: $e');
+    }
   }
 
   Future<bool> canAddEstate() async {
@@ -230,7 +241,15 @@ class _CustomDrawerState extends State<CustomDrawer> {
                     MaterialPageRoute(builder: (context) => SettingsScreen()));
               },
             ),
-
+            _buildShimmerOrItem(
+              isLoading: canAdd == null,
+              icon: Icons.privacy_tip,
+              text: getTranslated(context, "Privacy & Policy"),
+              hint: '',
+              onTap: () {
+                _launchTermsUrl();
+              },
+            ),
             _buildShimmerOrItem(
               isLoading: canAdd == null,
               icon: Icons.logout,
