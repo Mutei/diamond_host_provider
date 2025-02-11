@@ -43,6 +43,7 @@ class _MainScreenContentState extends State<MainScreenContent>
   bool isLoading = true;
   bool permissionsChecked = false;
   bool searchActive = false;
+  String typeAccount = '';
 
   String selectedCategory = "All"; // Default category
   final TextEditingController searchController = TextEditingController();
@@ -54,7 +55,8 @@ class _MainScreenContentState extends State<MainScreenContent>
     WidgetsBinding.instance.addObserver(this);
     searchController.addListener(_filterEstates); // Add listener for search
     _checkPermissionsAndFetchData();
-    _fetchUserFirstName(); // Fetch user's first name on initialization
+    _fetchUserFirstName();
+    _fetchUserTypeAccount(); // Fetch user's first name on initialization
   }
 
   @override
@@ -196,6 +198,20 @@ class _MainScreenContentState extends State<MainScreenContent>
     estate['ratingsList'] = ratings;
   }
 
+  Future<void> _fetchUserTypeAccount() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId != null) {
+      final userRef =
+          FirebaseDatabase.instance.ref("App/User/$userId/TypeAccount");
+      final snapshot = await userRef.get();
+      if (snapshot.exists) {
+        setState(() {
+          typeAccount = snapshot.value.toString();
+        });
+      }
+    }
+  }
+
   List<Map<String, dynamic>> _parseEstates(Map<String, dynamic> data) {
     final estateList = <Map<String, dynamic>>[];
     data.forEach((type, estatesByType) {
@@ -204,6 +220,7 @@ class _MainScreenContentState extends State<MainScreenContent>
           estateList.add({
             'id': estateID,
             'nameEn': estateData['NameEn'] ?? 'Unknown',
+            'typeAccount': estateData['TypeAccount'] ?? 'Unknown',
             'nameAr': estateData['NameAr'] ?? 'غير معروف',
             'rating': 0.0,
             'fee': estateData['Fee'] ?? 'Free',
@@ -420,59 +437,59 @@ class _MainScreenContentState extends State<MainScreenContent>
                             onChanged: (value) => _filterEstates(),
                           ),
                         ),
-                        10.kH,
-                        // Category Buttons (Hotel, Cafe, Restaurant)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 22.0),
-                          child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Hotel"),
-                                  icon: Icons.hotel,
-                                  backgroundColor: Colors.blueAccent,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const HotelScreen()),
-                                    );
-                                  },
-                                ),
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Coffee"),
-                                  icon: Icons
-                                      .coffee, // You might need to add the font package if not available by default
-                                  backgroundColor: Colors.brown,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const CoffeeScreen()),
-                                    );
-                                  },
-                                ),
-                                CustomCategoryButton(
-                                  label: getTranslated(context, "Restaurant"),
-                                  icon: Icons.restaurant,
-                                  backgroundColor: Colors.deepOrange,
-                                  onTap: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                          builder: (context) =>
-                                              const RestaurantScreen()),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        // 10.kH,
+                        // // Category Buttons (Hotel, Cafe, Restaurant)
+                        // Padding(
+                        //   padding: const EdgeInsets.only(left: 22.0),
+                        //   child: SingleChildScrollView(
+                        //     scrollDirection: Axis.horizontal,
+                        //     child: Row(
+                        //       mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        //       children: [
+                        //         CustomCategoryButton(
+                        //           label: getTranslated(context, "Hotel"),
+                        //           icon: Icons.hotel,
+                        //           backgroundColor: Colors.blueAccent,
+                        //           onTap: () {
+                        //             Navigator.push(
+                        //               context,
+                        //               MaterialPageRoute(
+                        //                   builder: (context) =>
+                        //                       const HotelScreen()),
+                        //             );
+                        //           },
+                        //         ),
+                        //         CustomCategoryButton(
+                        //           label: getTranslated(context, "Coffee"),
+                        //           icon: Icons
+                        //               .coffee, // You might need to add the font package if not available by default
+                        //           backgroundColor: Colors.brown,
+                        //           onTap: () {
+                        //             Navigator.push(
+                        //               context,
+                        //               MaterialPageRoute(
+                        //                   builder: (context) =>
+                        //                       const CoffeeScreen()),
+                        //             );
+                        //           },
+                        //         ),
+                        //         CustomCategoryButton(
+                        //           label: getTranslated(context, "Restaurant"),
+                        //           icon: Icons.restaurant,
+                        //           backgroundColor: Colors.deepOrange,
+                        //           onTap: () {
+                        //             Navigator.push(
+                        //               context,
+                        //               MaterialPageRoute(
+                        //                   builder: (context) =>
+                        //                       const RestaurantScreen()),
+                        //             );
+                        //           },
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                         15.kH,
                         // Display filtered or all estates
                         Padding(
@@ -511,11 +528,11 @@ class _MainScreenContentState extends State<MainScreenContent>
                                     onTap: () =>
                                         _navigateToEstateProfile(estate),
                                     child: EstateCard(
-                                      nameEn: estate['nameEn'],
-                                      estateId: estate['id'],
-                                      nameAr: estate['nameAr'],
-                                      rating: estate['rating'],
-                                    ),
+                                        nameEn: estate['nameEn'],
+                                        estateId: estate['id'],
+                                        nameAr: estate['nameAr'],
+                                        rating: estate['rating'],
+                                        typeAccount: typeAccount),
                                   );
                                 },
                               ),

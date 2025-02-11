@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:daimond_host_provider/extension/sized_box_extension.dart';
+import 'package:daimond_host_provider/localization/language_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -9,15 +11,17 @@ class EstateCard extends StatelessWidget {
   final String nameEn;
   final String nameAr;
   final String estateId;
-  final double rating; // Add rating parameter
+  final double rating;
+  final String typeAccount; // Add rating parameter
 
-  const EstateCard({
-    super.key,
-    required this.nameEn,
-    required this.nameAr,
-    required this.estateId,
-    required this.rating, // Pass rating to the constructor
-  });
+  const EstateCard(
+      {super.key,
+      required this.nameEn,
+      required this.nameAr,
+      required this.estateId,
+      required this.rating,
+      required this.typeAccount // Pass rating to the constructor
+      });
 
   Future<File> _getCachedImage(String estateId) async {
     final directory = await getTemporaryDirectory();
@@ -105,10 +109,26 @@ class EstateCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Display estate name based on the current language
-                  Text(
-                    displayName,
-                    style: kSecondaryStyle,
+                  Row(
+                    children: [
+                      Text(
+                        displayName,
+                        style: kSecondaryStyle,
+                      ),
+                      if (typeAccount == '2' || typeAccount == '3') ...[
+                        5.kW,
+                        Text(
+                          getTranslated(
+                              context,
+                              typeAccount == '2'
+                                  ? "(Premium)"
+                                  : "(Premium plus)"),
+                          style: kSecondaryStyle,
+                        ),
+                      ],
+                    ],
                   ),
+
                   const SizedBox(height: 8),
                   // Rating, Fee, and Time info
                   Row(

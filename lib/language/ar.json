@@ -488,5 +488,8 @@
   "Failed to update images": "فشل في تحديث الصور",
   "Loading images...": "جارٍ تحميل الصور...",
   "Please wait while we fetch your images": "يرجى الانتظار أثناء جلب الصور",
-  "Privacy & Policy": "سياسة الخصوصية"
+  "Privacy & Policy": "سياسة الخصوصية",
+  "(Premium)":"(بريميوم)",
+  "(Premium plus)":"(بريميوم بلس)"
+
 }
