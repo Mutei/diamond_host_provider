@@ -76,6 +76,7 @@ class _EditEstateState extends State<EditEstate> {
   final TextEditingController arBioController = TextEditingController();
   final TextEditingController enNameController = TextEditingController();
   final TextEditingController enBioController = TextEditingController();
+  TextEditingController menuLinkController = TextEditingController();
 
   // Text Controllers for Location
   final TextEditingController countryController = TextEditingController();
@@ -145,6 +146,7 @@ class _EditEstateState extends State<EditEstate> {
     arBioController.text = widget.objEstate["BioAr"] ?? '';
     enNameController.text = widget.objEstate["NameEn"] ?? '';
     enBioController.text = widget.objEstate["BioEn"] ?? '';
+    menuLinkController.text = widget.objEstate["MenuLink"] ?? '';
     countryController.text = widget.objEstate["Country"] ?? '';
     cityController.text = widget.objEstate["City"] ?? '';
     stateController.text = widget.objEstate["State"] ?? '';
@@ -798,6 +800,23 @@ class _EditEstateState extends State<EditEstate> {
                     ),
                   ),
                   SizedBox(height: 40),
+                  TextHeader("Menu"),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: TextFormFieldStyle(
+                      context: context,
+                      hint: getTranslated(context, "Enter Menu Link"),
+                      icon: Icon(
+                        Icons.person,
+                        color: kPurpleColor,
+                      ),
+                      control: menuLinkController,
+                      isObsecured: false,
+                      validate: true,
+                      textInputType: TextInputType.text,
+                    ),
+                  ),
+                  40.kH,
                   TextHeader("Location information"),
                   const SizedBox(height: 20),
                   ChooseCity(),
@@ -1493,6 +1512,8 @@ class _EditEstateState extends State<EditEstate> {
                               (widget.objEstate["BioAr"] ?? '') ||
                           enBioController.text !=
                               (widget.objEstate["BioEn"] ?? '') ||
+                          menuLinkController.text !=
+                              (widget.objEstate["MenuLink"] ?? '') ||
                           countryValue != (widget.objEstate["Country"] ?? '') ||
                           cityValue != (widget.objEstate["City"] ?? '') ||
                           stateValue != (widget.objEstate["State"] ?? '')) {
@@ -1643,6 +1664,7 @@ class _EditEstateState extends State<EditEstate> {
       "NameEn": enNameController.text,
       "BioAr": arBioController.text,
       "BioEn": enBioController.text,
+      "MenuLink": menuLinkController.text,
       "Country": countryValue,
       "City": cityValue,
       "State": stateValue,

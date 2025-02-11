@@ -1,5 +1,3 @@
-// lib/screens/all_posts_screen.dart
-
 import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
 import 'package:daimond_host_provider/localization/language_constants.dart';
@@ -8,6 +6,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:shimmer/shimmer.dart'; // Added shimmer package
 import '../widgets/reused_all_posts_card.dart';
 import 'add_posts_screen.dart';
 
@@ -241,7 +240,7 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
               radius: 20,
               backgroundImage: currentUserProfileImage != null
                   ? NetworkImage(currentUserProfileImage!)
-                  : const AssetImage('assets/images/default_profile.png')
+                  : const AssetImage('assets/images/default.jpg')
                       as ImageProvider,
             ),
             const SizedBox(width: 10),
@@ -265,6 +264,41 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
     );
   }
 
+  /// Builds the shimmer effect during loading
+  Widget _buildShimmerLoading() {
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: ListView.builder(
+        itemCount: 5,
+        itemBuilder: (context, index) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 16),
+            child: Container(
+              height: 100,
+              color: Colors.white,
+              child: Row(
+                children: [
+                  const CircleAvatar(
+                    radius: 30,
+                    backgroundColor: Colors.white,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Container(
+                      color: Colors.white,
+                      height: 15,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   /// Builds the list of posts
   Widget _buildPostsList() {
     return ListView.builder(
@@ -284,7 +318,6 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
     );
   }
 
-  /// Confirms the deletion of a post with the user
   void _confirmDeletePost(String postId) async {
     bool? confirmed = await showDialog<bool>(
       context: context,
@@ -312,7 +345,6 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
     }
   }
 
-  /// Deletes a post from Firebase and updates the UI
   void _deletePost(String postId) async {
     try {
       await _postsRef.child(postId).remove();
@@ -348,11 +380,7 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(
-              child: CircularProgressIndicator(
-                color: kPurpleColor,
-              ), // Loading indicator
-            )
+          ? _buildShimmerLoading() // Shimmer effect while loading
           : RefreshIndicator(
               onRefresh: _refreshPosts,
               child: ListView(

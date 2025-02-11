@@ -436,8 +436,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
         backgroundImage: widget.post['ProfileImageUrl'] != null &&
                 widget.post['ProfileImageUrl'].isNotEmpty
             ? NetworkImage(widget.post['ProfileImageUrl'])
-            : const AssetImage('assets/images/default_profile.png')
-                as ImageProvider,
+            : const AssetImage('assets/images/default.jpg') as ImageProvider,
         radius: 30,
       ),
       title: Text(
@@ -620,7 +619,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
                 backgroundImage: widget.currentUserProfileImage != null &&
                         widget.currentUserProfileImage!.isNotEmpty
                     ? NetworkImage(widget.currentUserProfileImage!)
-                    : const AssetImage('assets/images/default_profile.png')
+                    : const AssetImage('assets/images/default.jpg')
                         as ImageProvider,
               ),
               const SizedBox(width: 8),
@@ -668,7 +667,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
             radius: 20,
             backgroundImage: profileImageUrl.isNotEmpty
                 ? NetworkImage(profileImageUrl)
-                : const AssetImage('assets/images/default_profile.png')
+                : const AssetImage('assets/images/default.jpg')
                     as ImageProvider,
           ),
           title: Text(
@@ -723,7 +722,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
                 backgroundImage: widget.currentUserProfileImage != null &&
                         widget.currentUserProfileImage!.isNotEmpty
                     ? NetworkImage(widget.currentUserProfileImage!)
-                    : const AssetImage('assets/images/default_profile.png')
+                    : const AssetImage('assets/images/default.jpg')
                         as ImageProvider,
               ),
               const SizedBox(width: 8),
@@ -808,8 +807,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
         radius: 16,
         backgroundImage: replyProfileImageUrl.isNotEmpty
             ? NetworkImage(replyProfileImageUrl)
-            : const AssetImage('assets/images/default_profile.png')
-                as ImageProvider,
+            : const AssetImage('assets/images/default.jpg') as ImageProvider,
       ),
       title: Text(
         reply['userName'] ?? 'Unknown Estate',
