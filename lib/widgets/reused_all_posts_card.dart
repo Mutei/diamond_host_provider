@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart'; // Add this import
 import 'dart:io';
 import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:video_player/video_player.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -323,7 +325,81 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
     );
   }
 
-  // Method to add a reply to a comment
+  // Method to build the profile section at the top of each post
+  Widget _buildProfileSection() {
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundImage: widget.post['ProfileImageUrl'] != null &&
+                widget.post['ProfileImageUrl'].isNotEmpty
+            ? CachedNetworkImageProvider(widget.post['ProfileImageUrl'])
+            : const AssetImage('assets/images/default.jpg') as ImageProvider,
+        radius: 30,
+      ),
+      title: Text(
+        widget.post['Username'] ?? 'Unknown Estate',
+        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      ),
+      subtitle: Text(
+        widget.post['RelativeDate'] ?? 'Unknown Date',
+        style: const TextStyle(color: Colors.grey, fontSize: 12),
+      ),
+      trailing: widget.currentUserId == widget.post['userId']
+          ? PopupMenuButton<String>(
+              onSelected: (value) {
+                if (value == 'Delete') {
+                  widget.onDelete();
+                }
+              },
+              itemBuilder: (BuildContext context) {
+                return {'Delete'}.map((String choice) {
+                  return PopupMenuItem<String>(
+                    value: choice,
+                    child: Text(getTranslated(context, choice)),
+                  );
+                }).toList();
+              },
+            )
+          : null,
+    );
+  }
+
+  // Method to build the action buttons (like, comment)
+  Widget _buildActionButtons() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: [
+          GestureDetector(
+            onDoubleTap: _handleLike,
+            child: IconButton(
+              icon: Icon(
+                isLiked ? Icons.favorite : Icons.favorite_border,
+                color: isLiked ? Colors.red : Colors.grey,
+              ),
+              onPressed: _handleLike,
+            ),
+          ),
+          Text(
+            '$likeCount',
+            style: const TextStyle(fontSize: 14),
+          ),
+          const SizedBox(width: 16),
+          IconButton(
+            icon: const Icon(Icons.comment_outlined),
+            onPressed: () {
+              // Optionally, scroll to comment section or focus on comment field
+            },
+          ),
+          Text(
+            '${commentsList.length}',
+            style: const TextStyle(fontSize: 14),
+          ),
+        ],
+      ),
+    );
+  }
+
   void _addReply(String postId, String commentId, String replyText) async {
     String userId = widget.currentUserId ?? '';
     String? selectedEstate;
@@ -429,81 +505,6 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
     });
   }
 
-  // Method to build the profile section at the top of each post
-  Widget _buildProfileSection() {
-    return ListTile(
-      leading: CircleAvatar(
-        backgroundImage: widget.post['ProfileImageUrl'] != null &&
-                widget.post['ProfileImageUrl'].isNotEmpty
-            ? NetworkImage(widget.post['ProfileImageUrl'])
-            : const AssetImage('assets/images/default.jpg') as ImageProvider,
-        radius: 30,
-      ),
-      title: Text(
-        widget.post['Username'] ?? 'Unknown Estate',
-        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-      ),
-      subtitle: Text(
-        widget.post['RelativeDate'] ?? 'Unknown Date',
-        style: const TextStyle(color: Colors.grey, fontSize: 12),
-      ),
-      trailing: widget.currentUserId == widget.post['userId']
-          ? PopupMenuButton<String>(
-              onSelected: (value) {
-                if (value == 'Delete') {
-                  widget.onDelete();
-                }
-              },
-              itemBuilder: (BuildContext context) {
-                return {'Delete'}.map((String choice) {
-                  return PopupMenuItem<String>(
-                    value: choice,
-                    child: Text(getTranslated(context, choice)),
-                  );
-                }).toList();
-              },
-            )
-          : null,
-    );
-  }
-
-  // Method to build the action buttons (like, comment)
-  Widget _buildActionButtons() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.start,
-        children: [
-          GestureDetector(
-            onDoubleTap: _handleLike,
-            child: IconButton(
-              icon: Icon(
-                isLiked ? Icons.favorite : Icons.favorite_border,
-                color: isLiked ? Colors.red : Colors.grey,
-              ),
-              onPressed: _handleLike,
-            ),
-          ),
-          Text(
-            '$likeCount',
-            style: const TextStyle(fontSize: 14),
-          ),
-          const SizedBox(width: 16),
-          IconButton(
-            icon: const Icon(Icons.comment_outlined),
-            onPressed: () {
-              // Optionally, scroll to comment section or focus on comment field
-            },
-          ),
-          Text(
-            '${commentsList.length}',
-            style: const TextStyle(fontSize: 14),
-          ),
-        ],
-      ),
-    );
-  }
-
   // Method to build the text content of the post
   Widget _buildTextContent() {
     return Padding(
@@ -516,6 +517,7 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
   }
 
   // Method to build the images and videos in the post
+
   Widget _buildImageVideoContent() {
     List imageUrls = widget.post['ImageUrls'] ?? [];
     List videoUrls = widget.post['VideoUrls'] ?? [];
@@ -531,9 +533,19 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
         itemCount: imageUrls.length + videoUrls.length,
         itemBuilder: (context, index) {
           if (index < imageUrls.length) {
-            return Image.network(
-              imageUrls[index],
+            // Use Shimmer for the loading effect instead of CircularProgressIndicator
+            return CachedNetworkImage(
+              imageUrl: imageUrls[index],
               fit: BoxFit.cover,
+              placeholder: (context, url) => Shimmer.fromColors(
+                baseColor: Colors.grey[300]!,
+                highlightColor: Colors.grey[100]!,
+                child: Container(
+                  color: Colors.white,
+                  height: 300,
+                ),
+              ),
+              errorWidget: (context, url, error) => const Icon(Icons.error),
             );
           } else {
             String videoUrl = videoUrls[index - imageUrls.length];
@@ -559,7 +571,18 @@ class _ReusedAllPostsCardsState extends State<ReusedAllPostsCards> {
                     ),
                   );
                 } else {
-                  return const Center(child: CircularProgressIndicator());
+                  // Show shimmer effect while video is loading
+                  return Center(
+                    child: Shimmer.fromColors(
+                      baseColor: Colors.grey,
+                      highlightColor: Colors.white,
+                      child: Container(
+                        color: Colors.grey,
+                        width: double.infinity,
+                        height: 300,
+                      ),
+                    ),
+                  );
                 }
               },
             );

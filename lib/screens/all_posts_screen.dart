@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart'; // Add this import
 import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/constants/styles.dart';
 import 'package:daimond_host_provider/localization/language_constants.dart';
@@ -239,7 +240,7 @@ class _AllPostsScreenState extends State<AllPostsScreen> {
             CircleAvatar(
               radius: 20,
               backgroundImage: currentUserProfileImage != null
-                  ? NetworkImage(currentUserProfileImage!)
+                  ? CachedNetworkImageProvider(currentUserProfileImage!)
                   : const AssetImage('assets/images/default.jpg')
                       as ImageProvider,
             ),
