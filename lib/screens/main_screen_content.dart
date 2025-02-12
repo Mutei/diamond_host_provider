@@ -422,7 +422,11 @@ class _MainScreenContentState extends State<MainScreenContent>
                             children: [
                               Text(
                                 "${_getGreeting()}, ",
-                                style: kPrimaryStyle.copyWith(fontSize: 22),
+                                // style: kPrimaryStyle.copyWith(fontSize: 22),
+                                style: const TextStyle(
+                                  color: kEstatesTextsColor,
+                                  fontSize: 22,
+                                ),
                               ),
                               Text(firstName,
                                   style: TextStyle(
@@ -503,7 +507,11 @@ class _MainScreenContentState extends State<MainScreenContent>
                             searchActive
                                 ? getTranslated(context, "Search Results")
                                 : getTranslated(context, "My Estates"),
-                            style: kPrimaryStyle.copyWith(fontSize: 22),
+                            // style: kPrimaryStyle.copyWith(fontSize: 22),
+                            style: const TextStyle(
+                              color: kEstatesTextsColor,
+                              fontSize: 22,
+                            ),
                           ),
                         ),
                         filteredEstates.isEmpty

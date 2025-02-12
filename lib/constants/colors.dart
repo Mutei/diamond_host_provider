@@ -17,7 +17,8 @@ const kUnderProcessColor = Colors.orange;
 const kConfirmColor = Colors.green;
 const kDarkModeColor = Color(0xFF193945);
 const kPremiumTextColor = Colors.grey;
-const kPremiumPlusTextColor = Color(0xFFFFD54F);
+const kPremiumPlusTextColor = Colors.red;
+const kEstatesTextsColor = Colors.black;
 // Define the gradient as a reusable constant
 const LinearGradient kPrimaryGradient = LinearGradient(
   colors: [Color(0xFF900707), Color(0xFF900707)],

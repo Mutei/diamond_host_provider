@@ -466,6 +466,21 @@ class _EditEstateState extends State<EditEstate> {
     );
   }
 
+  bool _areRequiredFieldsFilled() {
+    return arNameController.text.isNotEmpty &&
+        enNameController.text.isNotEmpty &&
+        menuLinkController.text.isNotEmpty &&
+        (countryValue != null && countryValue!.isNotEmpty) &&
+        (stateValue != null && stateValue!.isNotEmpty) &&
+        (cityValue != null && cityValue!.isNotEmpty) &&
+        selectedRestaurantTypes.isNotEmpty &&
+        selectedEditSessionsType.isNotEmpty &&
+        selectedEntries
+            .isNotEmpty && // Check if at least one restaurant type is selected
+        ((widget.estateType == "1" && hasSwimmingPoolSelected) ||
+            (widget.estateType == "2" || widget.estateType == "3"));
+  }
+
   Future<void> _deleteEstate(BuildContext context, String estateId) async {
     try {
       final dbRef = FirebaseDatabase.instance.ref();
@@ -1502,6 +1517,19 @@ class _EditEstateState extends State<EditEstate> {
 
                       // Step 1: Check if any estate fields were changed
                       bool changesMade = false;
+                      // if (!_areRequiredFieldsFilled()) {
+                      //   showDialog(
+                      //     context: context,
+                      //     builder: (BuildContext context) {
+                      //       return const FailureDialog(
+                      //         text: "Incomplete Information",
+                      //         text1:
+                      //             "Please fill out all required fields before proceeding.",
+                      //       );
+                      //     },
+                      //   );
+                      //   return; // Stop further execution if fields are incomplete
+                      // }
 
                       // Compare simple text and location fields
                       if (arNameController.text !=

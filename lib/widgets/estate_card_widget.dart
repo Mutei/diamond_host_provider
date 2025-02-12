@@ -115,38 +115,75 @@ class EstateCard extends StatelessWidget {
                     children: [
                       Text(
                         displayName,
-                        style: kSecondaryStyle,
+                        // style: kSecondaryStyle,
+                        style: const TextStyle(
+                          color: kEstatesTextsColor,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                       if (typeAccount == '2' || typeAccount == '3') ...[
                         5.kW,
-                        Text(
-                          getTranslated(
-                            context,
-                            typeAccount == '2' ? "(Premium)" : "(Premium plus)",
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: typeAccount == '2'
+                                ? kPremiumTextColor.withOpacity(0.1)
+                                : kPremiumPlusTextColor.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: typeAccount == '2'
+                                  ? kPremiumTextColor
+                                  : kPremiumPlusTextColor,
+                              width: 1.2,
+                            ),
                           ),
-                          style: typeAccount == '2'
-                              ? (const TextStyle(
-                                  fontSize: 10,
-                                  color: kPremiumTextColor,
-                                ))
-                              : (const TextStyle(
-                                  fontSize: 10,
-                                  color: kPremiumPlusTextColor,
-                                )),
-                        ),
-                        if (typeAccount == '2' || typeAccount == '3') ...[
-                          typeAccount == "2"
-                              ? const FaIcon(
-                                  FontAwesomeIcons.medal,
-                                  color: kPremiumTextColor,
-                                  size: 10,
-                                )
-                              : const FaIcon(
-                                  FontAwesomeIcons.trophy,
-                                  color: kPremiumPlusTextColor,
-                                  size: 10,
+                          child: Row(
+                            children: [
+                              Text(
+                                getTranslated(
+                                  context,
+                                  typeAccount == '2'
+                                      ? "(Premium)"
+                                      : "(Premium plus)",
                                 ),
-                        ]
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: typeAccount == '2'
+                                      ? kPremiumTextColor
+                                      : kPremiumPlusTextColor,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              typeAccount == "2"
+                                  ? const FaIcon(
+                                      FontAwesomeIcons.medal,
+                                      color: kPremiumTextColor,
+                                      size: 12,
+                                    )
+                                  : const FaIcon(
+                                      FontAwesomeIcons.trophy,
+                                      color: kPremiumPlusTextColor,
+                                      size: 12,
+                                    ),
+                            ],
+                          ),
+                        ),
+                        // if (typeAccount == '2' || typeAccount == '3') ...[
+                        //   typeAccount == "2"
+                        //       ? const FaIcon(
+                        //           FontAwesomeIcons.medal,
+                        //           color: kPremiumTextColor,
+                        //           size: 10,
+                        //         )
+                        //       : const FaIcon(
+                        //           FontAwesomeIcons.trophy,
+                        //           color: kPremiumPlusTextColor,
+                        //           size: 10,
+                        //         ),
+                        // ]
                       ],
                     ],
                   ),
