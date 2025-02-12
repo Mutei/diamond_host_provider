@@ -1,7 +1,9 @@
 import 'dart:io';
+import 'package:daimond_host_provider/constants/colors.dart';
 import 'package:daimond_host_provider/extension/sized_box_extension.dart';
 import 'package:daimond_host_provider/localization/language_constants.dart';
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:firebase_storage/firebase_storage.dart';
@@ -119,12 +121,32 @@ class EstateCard extends StatelessWidget {
                         5.kW,
                         Text(
                           getTranslated(
-                              context,
-                              typeAccount == '2'
-                                  ? "(Premium)"
-                                  : "(Premium plus)"),
-                          style: kSecondaryStyle,
+                            context,
+                            typeAccount == '2' ? "(Premium)" : "(Premium plus)",
+                          ),
+                          style: typeAccount == '2'
+                              ? (const TextStyle(
+                                  fontSize: 10,
+                                  color: kPremiumTextColor,
+                                ))
+                              : (const TextStyle(
+                                  fontSize: 10,
+                                  color: kPremiumPlusTextColor,
+                                )),
                         ),
+                        if (typeAccount == '2' || typeAccount == '3') ...[
+                          typeAccount == "2"
+                              ? const FaIcon(
+                                  FontAwesomeIcons.medal,
+                                  color: kPremiumTextColor,
+                                  size: 10,
+                                )
+                              : const FaIcon(
+                                  FontAwesomeIcons.trophy,
+                                  color: kPremiumPlusTextColor,
+                                  size: 10,
+                                ),
+                        ]
                       ],
                     ],
                   ),

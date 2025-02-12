@@ -56,7 +56,8 @@ class _MainScreenContentState extends State<MainScreenContent>
     searchController.addListener(_filterEstates); // Add listener for search
     _checkPermissionsAndFetchData();
     _fetchUserFirstName();
-    _fetchUserTypeAccount(); // Fetch user's first name on initialization
+    _fetchUserTypeAccount();
+    // Fetch user's first name on initialization
   }
 
   @override
@@ -198,17 +199,20 @@ class _MainScreenContentState extends State<MainScreenContent>
     estate['ratingsList'] = ratings;
   }
 
-  Future<void> _fetchUserTypeAccount() async {
+  void _fetchUserTypeAccount() {
     final userId = FirebaseAuth.instance.currentUser?.uid;
     if (userId != null) {
       final userRef =
           FirebaseDatabase.instance.ref("App/User/$userId/TypeAccount");
-      final snapshot = await userRef.get();
-      if (snapshot.exists) {
-        setState(() {
-          typeAccount = snapshot.value.toString();
-        });
-      }
+
+      // Listen for real-time updates
+      userRef.onValue.listen((event) {
+        if (event.snapshot.exists) {
+          setState(() {
+            typeAccount = event.snapshot.value.toString();
+          });
+        }
+      });
     }
   }
 
