@@ -264,6 +264,17 @@ class _EditEstateState extends State<EditEstate> {
   /// Remove existing image from Firebase Storage
   Future<void> removeImage(String imageUrl) async {
     try {
+      // Check if there is more than one image before allowing deletion
+      if (existingImageUrls.length <= 1) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(getTranslated(context, "At least one image is required.")),
+          ),
+        );
+        return; // Stop further execution
+      }
+
       Reference ref = storage.refFromURL(imageUrl);
       await ref.delete();
 
@@ -272,7 +283,9 @@ class _EditEstateState extends State<EditEstate> {
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Image removed successfully")),
+        SnackBar(
+            content:
+                Text(getTranslated(context, "Image removed successfully"))),
       );
     } catch (e) {
       print("Error removing image: $e");
@@ -765,8 +778,16 @@ class _EditEstateState extends State<EditEstate> {
                       isObsecured: false,
                       validate: true,
                       textInputType: TextInputType.text,
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return getTranslated(
+                              context, "Estate's name in arabic is missing");
+                        }
+                        return null;
+                      },
                     ),
                   ),
+
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: TextFormFieldStyle(

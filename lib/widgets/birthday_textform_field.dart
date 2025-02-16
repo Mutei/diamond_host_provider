@@ -13,6 +13,7 @@ class TextFormFieldStyle extends StatefulWidget {
   final TextInputType textInputType;
   final FocusNode? focusNode;
   final bool showVisibilityToggle;
+  final String? Function(String?)? validator; // Optional validator function
 
   TextFormFieldStyle({
     super.key,
@@ -26,6 +27,7 @@ class TextFormFieldStyle extends StatefulWidget {
     required this.textInputType,
     this.focusNode,
     this.showVisibilityToggle = false,
+    this.validator, // Optional validator
   });
 
   @override
@@ -85,6 +87,7 @@ class _TextFormFieldStyleState extends State<TextFormFieldStyle> {
         ),
         keyboardType: widget.textInputType,
         style: const TextStyle(fontFamily: "Poppins", fontSize: 16),
+        validator: widget.validator, // Use the optional validator
       ),
     );
   }
